@@ -662,7 +662,7 @@ export default function Generator({ initialSourceType }: GeneratorProps) {
                   href={autofillNotice.verifyUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 font-medium text-primary underline hover:text-[#134b85]"
+                  className="inline-flex items-center gap-1 font-medium text-primary underline hover:text-[#1D4ED8]"
                 >
                   Open the source to check it&rsquo;s the right work
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

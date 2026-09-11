@@ -3,11 +3,32 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fafaf9;
+  --foreground: #1c1c1a;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Citation output text — Crimson Pro serif per the brand spec, applied via the `font-citation`
+   Tailwind class in CitationOutput.tsx; this plain class exists for anywhere else that needs the
+   same treatment without pulling in the rest of Tailwind's text-base defaults. */
+.citation-text {
+  font-family: var(--font-citation), Georgia, serif;
+  font-size: 15px;
+  line-height: 1.8;
+  color: #1a1a18;
+}
+
+/* Uppercase section labels (rule references, panel captions). */
+.label-caps {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #aeada9;
 }

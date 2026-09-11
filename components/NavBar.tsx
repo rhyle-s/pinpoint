@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import Logo from './Logo'
 
 const TABS = [
   { label: 'Generate', href: '/generate', active: true },
@@ -16,8 +17,8 @@ export default function NavBar() {
   return (
     <header className="border-b border-gray-200 bg-white" style={{ borderBottomWidth: '0.5px' }}>
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-        <Link href="/generate" className="text-lg font-medium tracking-tight text-gray-900">
-          pin<span className="text-primary">·</span>point
+        <Link href="/generate">
+          <Logo size="md" />
         </Link>
 
         <ul className="flex items-center gap-6">

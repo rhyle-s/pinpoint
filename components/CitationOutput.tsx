@@ -35,7 +35,7 @@ function ValidationStatus({ validating, result }: { validating: boolean; result:
     return (
       <span
         className={`inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
-          unsure ? 'bg-amber-50 text-amber-700' : 'bg-green-50 text-green-700'
+          unsure ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-600'
         }`}
       >
         AGLC4 check passed{unsure ? ` · ${result.confidence} confidence` : ' ✓'}
@@ -113,15 +113,18 @@ function Panel({ label, rule, text }: PanelProps) {
           disabled={!text}
           className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
             copied
-              ? 'border-green-200 bg-green-50 text-green-700'
+              ? 'border-emerald-200 bg-emerald-50 text-emerald-600'
               : 'border-gray-200 text-gray-600 hover:border-gray-300 disabled:cursor-not-allowed disabled:opacity-40'
           }`}
         >
           {copied ? 'Copied ✓' : 'Copy'}
         </button>
       </div>
+      {/* Crimson Pro serif, 15px/1.8 line-height per the brand spec's citation-output typography —
+          distinct from the app's own UI sans-serif everywhere else. formatItalics already renders
+          case names/legislation/journal names etc as <em>, never bold. */}
       <p
-        className="min-h-[1.5rem] font-serif text-base leading-relaxed text-gray-900"
+        className="min-h-[1.5rem] font-citation text-[15px] leading-[1.8] text-gray-900"
         dangerouslySetInnerHTML={{ __html: text ? formatItalics(text, 'html') : '—' }}
       />
     </div>

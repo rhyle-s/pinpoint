@@ -307,7 +307,7 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
               type="button"
               onClick={() => runAutofill(value)}
               disabled={isLoading || !value.trim()}
-              className="w-[88px] shrink-0 whitespace-nowrap rounded-lg bg-primary px-2 py-2 text-sm font-medium text-white transition-colors hover:bg-[#134b85] disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-[88px] shrink-0 whitespace-nowrap rounded-lg bg-primary px-2 py-2 text-sm font-medium text-white transition-colors hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -342,7 +342,7 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
               type="button"
               onClick={() => runPasteText(pasteText)}
               disabled={isLoading || !pasteText.trim()}
-              className="flex w-[88px] shrink-0 items-center justify-center whitespace-nowrap rounded-lg bg-primary px-2 text-sm font-medium text-white transition-colors hover:bg-[#134b85] disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex w-[88px] shrink-0 items-center justify-center whitespace-nowrap rounded-lg bg-primary px-2 text-sm font-medium text-white transition-colors hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-50"
             >
               Extract
             </button>
@@ -376,7 +376,7 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
           title="Upload or drop a PDF — it's read in your browser and never uploaded to our servers"
           style={{ width: 144, height: 144 }}
           className={`flex shrink-0 flex-col items-center justify-center gap-1 rounded-lg text-center text-xs font-medium leading-tight text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-            isDraggingFile ? 'bg-[#134b85]' : 'bg-primary hover:bg-[#134b85]'
+            isDraggingFile ? 'bg-[#1D4ED8]' : 'bg-primary hover:bg-[#1D4ED8]'
           }`}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -414,7 +414,7 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
       )}
 
       {!isLoading && status === 'success' && (
-        <p className="mt-2 text-xs font-medium text-green-700">{feedbackText}</p>
+        <p className="mt-2 text-xs font-medium text-emerald-600">{feedbackText}</p>
       )}
 
       {!isLoading && status === 'error' && (
