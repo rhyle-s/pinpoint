@@ -7,7 +7,8 @@ interface LegislationFormProps {
   onChange: (fields: LegislationFields) => void
 }
 
-const JURISDICTIONS: { value: JurisdictionCode | 'none'; label: string }[] = [
+const JURISDICTIONS: { value: JurisdictionCode | 'none' | 'unknown'; label: string }[] = [
+  { value: 'unknown', label: 'Select jurisdiction…' },
   { value: 'Cth', label: 'Cth' },
   { value: 'Vic', label: 'Vic' },
   { value: 'NSW', label: 'NSW' },
@@ -77,7 +78,7 @@ export default function LegislationForm({ fields, onChange }: LegislationFormPro
           <select
             className={inputClass}
             value={fields.jurisdiction}
-            onChange={(e) => update({ jurisdiction: e.target.value as JurisdictionCode | 'none' })}
+            onChange={(e) => update({ jurisdiction: e.target.value as JurisdictionCode | 'none' | 'unknown' })}
           >
             {JURISDICTIONS.map((j) => (
               <option key={j.value} value={j.value}>

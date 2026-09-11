@@ -44,7 +44,11 @@ export interface CaseFields {
 export interface LegislationFields {
   actTitle: string
   year: string
-  jurisdiction: JurisdictionCode | 'none'
+  // 'none' = deliberately no jurisdiction bracket (the bare Commonwealth 'Australian Constitution',
+  // r 3.6). 'unknown' = not yet selected / autofill couldn't determine it — distinct from 'none',
+  // and flagged as a missing field rather than silently defaulted to 'Cth' or carried over from a
+  // previous citation.
+  jurisdiction: JurisdictionCode | 'none' | 'unknown'
   pinpointType?: LegislationPinpointType
   pinpointValue?: string
   // Not exposed in LegislationForm.tsx — matching this app's convention everywhere else, where

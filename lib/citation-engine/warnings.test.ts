@@ -85,6 +85,21 @@ describe('getMissingFieldsWarning', () => {
     expect(getMissingFieldsWarning('legislation', fields)).toBeUndefined()
   })
 
+  it('flags an unknown jurisdiction (autofill could not determine it), not a real code', () => {
+    const unknown: LegislationFields = { actTitle: 'Weapons Act', year: '1990', jurisdiction: 'unknown' }
+    expect(getMissingFieldsWarning('legislation', unknown)).toContain('Jurisdiction')
+
+    const known: LegislationFields = { actTitle: 'Weapons Act', year: '1990', jurisdiction: 'Qld' }
+    expect(getMissingFieldsWarning('legislation', known)).toBeUndefined()
+  })
+
+  it('flags both jurisdiction and year when an autofilled Act has neither', () => {
+    const fields: LegislationFields = { actTitle: 'Weapons Act', year: '', jurisdiction: 'unknown' }
+    const warning = getMissingFieldsWarning('legislation', fields)
+    expect(warning).toContain('Jurisdiction')
+    expect(warning).toContain('Year')
+  })
+
   it('flags missing journal fields but never volume/issue', () => {
     const fields: JournalFields = {
       authors: [],

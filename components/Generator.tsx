@@ -144,7 +144,7 @@ const DEFAULT_OTHER_SOURCES_FIELDS: OtherSourcesFields = {
 // that fields left over from a *previous, different* autofill (or the pre-filled demo values)
 // don't linger when the new result doesn't address them — see mergeAutofillFields.
 const BLANK_CASE_FIELDS: CaseFields = { caseName: '', reportType: 'reported', year: '' }
-const BLANK_LEGISLATION_FIELDS: LegislationFields = { actTitle: '', year: '', jurisdiction: 'Cth' }
+const BLANK_LEGISLATION_FIELDS: LegislationFields = { actTitle: '', year: '', jurisdiction: 'unknown' }
 const BLANK_JOURNAL_FIELDS: JournalFields = {
   authors: [''],
   articleTitle: '',
@@ -257,6 +257,12 @@ const PINPOINT_KEYS: Record<SourceType, readonly string[]> = {
 // the same as typing into any other field.
 const CLASSIFICATION_KEYS: Partial<Record<SourceType, readonly string[]>> = {
   book: ['bookType'],
+  // jurisdiction isn't a "what kind of source" classifier like the others here, but it needs the
+  // same never-carried-over treatment: a wrong jurisdiction is a serious, silent citation error,
+  // so a fresh autofill must always reflect the new Act's own jurisdiction (or 'unknown' when it
+  // can't be determined — see LegislationFields), never keep whatever the student picked for a
+  // previous, unrelated citation.
+  legislation: ['jurisdiction'],
   otherLegislativeMaterial: ['subtype'],
   // foreignCountry/foreignCategory are a second-level classification nested inside the
   // 'foreignDomestic' subtype (see ForeignDomesticForm.tsx); foreignCaseReportType is a

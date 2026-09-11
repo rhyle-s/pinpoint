@@ -36,6 +36,20 @@ describe('generateLegislationCitation', () => {
     expect(generateLegislationCitation(fields).footnote).toBe('*Australian Constitution* s 51(xxvi).')
   })
 
+  it("renders no jurisdiction bracket when jurisdiction is 'unknown' (not yet selected)", () => {
+    const fields: LegislationFields = {
+      actTitle: 'Weapons Act',
+      year: '1990',
+      jurisdiction: 'unknown',
+      pinpointType: 's',
+      pinpointValue: '50',
+    }
+    // Deliberately incomplete — the missing bracket is surfaced by getMissingFieldsWarning, not
+    // papered over with a guessed '(Cth)'.
+    expect(generateLegislationCitation(fields).footnote).toBe('*Weapons Act 1990* s 50.')
+    expect(generateLegislationCitation(fields).bibliography).toBe('*Weapons Act 1990*')
+  })
+
   it('Environment Protection and Biodiversity Conservation Act 1999 (Cth) sch 1', () => {
     const fields: LegislationFields = {
       actTitle: 'Environment Protection and Biodiversity Conservation Act',

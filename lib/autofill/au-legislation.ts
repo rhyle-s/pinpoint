@@ -130,7 +130,7 @@ function blockedFallback(
 }
 
 function billJurisdictionOf(jurisdiction: LegislationFields['jurisdiction'] | undefined): OtherLegislativeMaterialFields['billJurisdiction'] {
-  return jurisdiction && jurisdiction !== 'none' ? jurisdiction : undefined
+  return jurisdiction && jurisdiction !== 'none' && jurisdiction !== 'unknown' ? jurisdiction : undefined
 }
 
 function bareOtherLegislativeMaterialFallback(

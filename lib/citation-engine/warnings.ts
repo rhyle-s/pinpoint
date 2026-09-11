@@ -57,11 +57,14 @@ function missingLegislationFields(f: LegislationFields): string[] {
   const missing: string[] = []
   if (isBlank(f.actTitle)) missing.push('Act title')
   // 'none' jurisdiction means the bare Commonwealth 'Australian Constitution' (see
-  // LegislationForm.tsx's own dropdown label) — AGLC4 r 3.6 gives it no year at all, by design,
-  // so a blank year there is correct, not missing. Every other jurisdiction genuinely needs one.
-  if (f.jurisdiction !== 'none' && isBlank(f.year)) missing.push('Year')
-  // jurisdiction itself is never "missing" — the dropdown always carries a real selection, and
-  // 'none' is itself a deliberate, valid value, not an empty one.
+  // LegislationForm.tsx's own dropdown label) — AGLC4 r 3.6 gives it no year or jurisdiction
+  // bracket at all, by design, so neither is "missing" there. Every other Act needs both.
+  if (f.jurisdiction !== 'none') {
+    // 'unknown' is the deliberate "not selected / autofill couldn't tell" state (see types.ts) —
+    // never silently defaulted, so it's flagged here instead. A real code ('Cth' etc) is fine.
+    if (f.jurisdiction === 'unknown') missing.push('Jurisdiction')
+    if (isBlank(f.year)) missing.push('Year')
+  }
   return missing
 }
 

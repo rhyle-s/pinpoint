@@ -3,7 +3,10 @@ import { ensureFullStop, italicize, joinParts, stripTrailingFullStop, wrapParens
 import { formatAboveN } from './subsequent'
 
 function jurisdictionPart(fields: LegislationFields): string {
-  return fields.jurisdiction === 'none' ? '' : wrapParens(fields.jurisdiction)
+  // 'none' = deliberately omitted (Constitution); 'unknown' = not selected yet — render nothing
+  // either way (the missing bracket for 'unknown' is surfaced via getMissingFieldsWarning).
+  if (fields.jurisdiction === 'none' || fields.jurisdiction === 'unknown') return ''
+  return wrapParens(fields.jurisdiction)
 }
 
 function pinpointPart(fields: LegislationFields): string {

@@ -53,7 +53,7 @@ For any field that is not clearly present in the content, use an empty string ""
 
 Whenever you need to extract a document/article's own title from a webpage (documentTitle, articleTitle, title — whichever field applies to this source type), a "Page title" line reflects the raw <title> tag, which on many sites is not just the headline — publishers routinely append extra text after it for SEO purposes: a secondary tagline, keywords, a document/ruling number, or the site name itself, often joined with ' - ' or ' | ', sometimes more than one such segment chained together (eg 'Real Headline - A Secondary SEO Tagline That Names A Ruling Number - Site Name'). Do not assume the whole "Page title" line, or even just its portion before the last separator, is the real title — a middle segment can be SEO padding that was never displayed as a real subheading anywhere on the actual page. When an "H1 heading" line is also given, it reflects the page's own main heading exactly as actually displayed to a reader, and is the more reliable source for the real title whenever the two disagree — prefer it. Fall back to carefully parsing the "Page title" line (stripping a trailing site name, and any other segment that reads as SEO padding rather than genuine article text) only when no "H1 heading" line is present.
 
-For legislation, actTitle is the Act's name only, with no year in it (eg 'Crimes Act', not 'Crimes Act 1958') — the year belongs solely in the separate year field.
+For legislation, actTitle is the Act's name only, with no year in it (eg 'Crimes Act', not 'Crimes Act 1958') — the year belongs solely in the separate year field. If the source does not make the jurisdiction clear (eg pasted text that just names an Act and its year), leave jurisdiction as an empty string rather than guessing 'Cth' or inferring it from the Act's subject matter — an unmarked jurisdiction is flagged for the student to fill in, whereas a wrong one is a silent error.
 
 For cases, set caseReportType based on how the case is cited: 'unreported-mnc' when the citation is a medium neutral citation in the form [Year] CourtCode Number (eg '[2026] QCA 146') — courtCode is the court abbreviation (eg 'QCA') and caseNumber is just the trailing number (eg '146'), and volume/reportAbbreviation/startingPage are left empty. Use 'reported' when the citation instead has a volume and a law report series (eg '(1992) 175 CLR 1') — volume, reportAbbreviation, and startingPage are filled and courtCode/caseNumber are left empty. A case's judge(s) is whoever delivered the judgment, not the parties.
 
@@ -344,7 +344,10 @@ function mapFieldsToSourceType(sourceType: SourceType, raw: ExtractedFields, url
         judge: raw.judge || undefined,
       }
     case 'legislation': {
-      const jurisdiction: LegislationFields['jurisdiction'] = normalizeJurisdiction(raw.jurisdiction) ?? 'Cth'
+      // Never default an unrecognised jurisdiction to 'Cth' — a wrong jurisdiction is a silent
+      // citation error. 'unknown' renders no bracket and is flagged as a missing field for the
+      // student to fill in (see LegislationFields / getMissingFieldsWarning).
+      const jurisdiction: LegislationFields['jurisdiction'] = normalizeJurisdiction(raw.jurisdiction) ?? 'unknown'
       // Safety net regardless of how well the model followed the "no year in actTitle"
       // instruction above — the citation engine italicises title and year together itself.
       const { title: actTitle, year } = stripTrailingYear(raw.actTitle, raw.year)
