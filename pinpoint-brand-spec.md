@@ -5,35 +5,41 @@
 
 ## 1. Brand Identity
 
-### Logo
-- **Wordmark:** `pinpoint` — all lowercase, no icon, no separator
-- **"pin":** `#2563EB` (rich blue)
-- **"point":** `#1C1C1A` (near black)
-- **Font:** Plus Jakarta Sans, weight 600
-- **Letter spacing:** -0.5px
+### Logo — "Precision Mark"
+Chosen from an 8-direction exploration (v1.0 shipped the two-tone `pin`/`point` split below; superseded here). One ink colour throughout — the two-tone split is dropped — with a small blue full stop standing in for "pin" and for the name's own meaning.
+- **Wordmark:** `pinpoint.` — all lowercase, no separator between the words, a trailing full stop in the accent colour. No icon.
+- **Text colour:** `#1C1C1A` (near black) — `#F1F5FF` on a dark/blue background
+- **Full-stop accent:** `#2563EB` (rich blue) — `#93C5FD` on a dark/blue background
+- **Font:** Plus Jakarta Sans, weight 700
+- **Letter spacing:** -0.03em
+- **Optional underline rule:** a short bar in the accent colour beneath the mark, width ≈ 2.4em relative to the wordmark's own font size — a hero/marketing flourish only, never in compact contexts (nav bar, favicon)
 - **Never:** italicise, outline, stretch, rotate, or add effects to the logo
 - **Never:** use the logo smaller than 14px font size
 
 ### Logo implementation (JSX)
 ```jsx
 // components/Logo.tsx
-import { PlusJakartaSans } from 'next/font/google'
+const SIZES = { sm: 'text-sm', md: 'text-lg', lg: 'text-2xl', xl: 'text-4xl' }
 
-export function Logo({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
-  const sizes = { sm: 'text-sm', md: 'text-lg', lg: 'text-2xl' }
+export default function Logo({ size = 'md', onDark = false, rule = false }) {
+  const ink = onDark ? '#F1F5FF' : '#1C1C1A'
+  const accent = onDark ? '#93C5FD' : '#2563EB'
   return (
-    <span className={`font-semibold tracking-tight ${sizes[size]}`}
-          style={{ letterSpacing: '-0.5px', fontFamily: 'Plus Jakarta Sans' }}>
-      <span style={{ color: '#2563EB' }}>pin</span>
-      <span style={{ color: '#1C1C1A' }}>point</span>
+    <span className="inline-flex flex-col items-start gap-1.5">
+      <span className={`font-sans font-bold ${SIZES[size]}`} style={{ letterSpacing: '-0.03em', color: ink }}>
+        pinpoint<span style={{ color: accent, marginLeft: 1 }}>.</span>
+      </span>
+      {rule && (
+        <span aria-hidden style={{ width: '2.4em', height: 3, borderRadius: 2, background: accent, display: 'block' }} />
+      )}
     </span>
   )
 }
 ```
 
-### Dark background logo
-- **"pin":** `#60A5FA` (light blue — readable on dark)
-- **"point":** `#F1F5FF` (near white)
+### Superseded: v1.0 two-tone split
+Kept for reference only — not in use.
+- **"pin":** `#2563EB` (rich blue) — **"point":** `#1C1C1A` (near black), Plus Jakarta Sans weight 600, letter-spacing -0.5px, no full stop, no underline rule.
 
 ### Tagline
 *AGLC4 citations, done correctly.*

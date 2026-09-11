@@ -18,7 +18,7 @@ export default function NavBar() {
     <header className="border-b border-gray-200 bg-white" style={{ borderBottomWidth: '0.5px' }}>
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         <Link href="/generate">
-          <Logo size="md" />
+          <Logo size="lg" />
         </Link>
 
         <ul className="flex items-center gap-6">
