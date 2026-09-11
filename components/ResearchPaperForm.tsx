@@ -129,25 +129,27 @@ export default function ResearchPaperForm({ fields, onChange }: ResearchPaperFor
         </Field>
       )}
 
-      <Field label={institution.label}>
-        <input
-          className={inputClass}
-          type="text"
-          placeholder={institution.placeholder}
-          value={fields.institution}
-          onChange={(e) => update({ institution: e.target.value })}
-        />
-      </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label={institution.label}>
+          <input
+            className={inputClass}
+            type="text"
+            placeholder={institution.placeholder}
+            value={fields.institution}
+            onChange={(e) => update({ institution: e.target.value })}
+          />
+        </Field>
 
-      <Field label={date.label}>
-        <input
-          className={inputClass}
-          type="text"
-          placeholder={date.placeholder}
-          value={fields.date}
-          onChange={(e) => update({ date: e.target.value })}
-        />
-      </Field>
+        <Field label={date.label}>
+          <input
+            className={inputClass}
+            type="text"
+            placeholder={date.placeholder}
+            value={fields.date}
+            onChange={(e) => update({ date: e.target.value })}
+          />
+        </Field>
+      </div>
 
       <Field label="Pinpoint" optional>
         <input

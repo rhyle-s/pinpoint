@@ -95,25 +95,27 @@ export default function JournalForm({ fields, onChange }: JournalFormProps) {
         />
       </Field>
 
-      <Field label="Volume" optional>
-        <input
-          className={inputClass}
-          type="text"
-          placeholder="82"
-          value={fields.volume ?? ''}
-          onChange={(e) => update({ volume: e.target.value })}
-        />
-      </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Volume" optional>
+          <input
+            className={inputClass}
+            type="text"
+            placeholder="82"
+            value={fields.volume ?? ''}
+            onChange={(e) => update({ volume: e.target.value })}
+          />
+        </Field>
 
-      <Field label="Issue" optional>
-        <input
-          className={inputClass}
-          type="text"
-          placeholder="10"
-          value={fields.issue ?? ''}
-          onChange={(e) => update({ issue: e.target.value })}
-        />
-      </Field>
+        <Field label="Issue" optional>
+          <input
+            className={inputClass}
+            type="text"
+            placeholder="10"
+            value={fields.issue ?? ''}
+            onChange={(e) => update({ issue: e.target.value })}
+          />
+        </Field>
+      </div>
 
       <Field label="Journal name">
         <input
@@ -125,25 +127,27 @@ export default function JournalForm({ fields, onChange }: JournalFormProps) {
         />
       </Field>
 
-      <Field label="Starting page">
-        <input
-          className={inputClass}
-          type="text"
-          placeholder="700"
-          value={fields.startingPage}
-          onChange={(e) => update({ startingPage: e.target.value })}
-        />
-      </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Starting page">
+          <input
+            className={inputClass}
+            type="text"
+            placeholder="700"
+            value={fields.startingPage}
+            onChange={(e) => update({ startingPage: e.target.value })}
+          />
+        </Field>
 
-      <Field label="Pinpoint" optional>
-        <input
-          className={inputClass}
-          type="text"
-          placeholder="705"
-          value={fields.pinpoint ?? ''}
-          onChange={(e) => update({ pinpoint: e.target.value })}
-        />
-      </Field>
+        <Field label="Pinpoint" optional>
+          <input
+            className={inputClass}
+            type="text"
+            placeholder="705"
+            value={fields.pinpoint ?? ''}
+            onChange={(e) => update({ pinpoint: e.target.value })}
+          />
+        </Field>
+      </div>
     </div>
   )
 }

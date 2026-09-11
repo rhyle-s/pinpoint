@@ -62,61 +62,65 @@ export default function LegislationForm({ fields, onChange }: LegislationFormPro
         />
       </Field>
 
-      <Field label="Year">
-        <input
-          className={inputClass}
-          type="text"
-          placeholder="1988"
-          value={fields.year}
-          onChange={(e) => update({ year: e.target.value })}
-        />
-      </Field>
-
-      <Field label="Jurisdiction">
-        <select
-          className={inputClass}
-          value={fields.jurisdiction}
-          onChange={(e) => update({ jurisdiction: e.target.value as JurisdictionCode | 'none' })}
-        >
-          {JURISDICTIONS.map((j) => (
-            <option key={j.value} value={j.value}>
-              {j.label}
-            </option>
-          ))}
-        </select>
-      </Field>
-
-      <Field label="Pinpoint type">
-        <select
-          className={inputClass}
-          value={fields.pinpointType ?? 'none'}
-          onChange={(e) => {
-            const value = e.target.value as LegislationPinpointType | 'none'
-            update({
-              pinpointType: value === 'none' ? undefined : value,
-              pinpointValue: value === 'none' ? undefined : fields.pinpointValue,
-            })
-          }}
-        >
-          {PINPOINT_TYPES.map((pt) => (
-            <option key={pt.value} value={pt.value}>
-              {pt.label}
-            </option>
-          ))}
-        </select>
-      </Field>
-
-      {fields.pinpointType && (
-        <Field label="Pinpoint value">
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Year">
           <input
             className={inputClass}
             type="text"
-            placeholder="13"
-            value={fields.pinpointValue ?? ''}
-            onChange={(e) => update({ pinpointValue: e.target.value })}
+            placeholder="1988"
+            value={fields.year}
+            onChange={(e) => update({ year: e.target.value })}
           />
         </Field>
-      )}
+
+        <Field label="Jurisdiction">
+          <select
+            className={inputClass}
+            value={fields.jurisdiction}
+            onChange={(e) => update({ jurisdiction: e.target.value as JurisdictionCode | 'none' })}
+          >
+            {JURISDICTIONS.map((j) => (
+              <option key={j.value} value={j.value}>
+                {j.label}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Pinpoint type">
+          <select
+            className={inputClass}
+            value={fields.pinpointType ?? 'none'}
+            onChange={(e) => {
+              const value = e.target.value as LegislationPinpointType | 'none'
+              update({
+                pinpointType: value === 'none' ? undefined : value,
+                pinpointValue: value === 'none' ? undefined : fields.pinpointValue,
+              })
+            }}
+          >
+            {PINPOINT_TYPES.map((pt) => (
+              <option key={pt.value} value={pt.value}>
+                {pt.label}
+              </option>
+            ))}
+          </select>
+        </Field>
+
+        {fields.pinpointType && (
+          <Field label="Pinpoint value">
+            <input
+              className={inputClass}
+              type="text"
+              placeholder="13"
+              value={fields.pinpointValue ?? ''}
+              onChange={(e) => update({ pinpointValue: e.target.value })}
+            />
+          </Field>
+        )}
+      </div>
     </div>
   )
 }

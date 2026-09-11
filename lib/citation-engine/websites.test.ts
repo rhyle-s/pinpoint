@@ -42,3 +42,29 @@ describe('generateWebsiteCitation', () => {
     )
   })
 })
+
+describe('generateWebsiteCitation — subsequent references (AGLC4 r 1.4.1)', () => {
+  it('defaults to a bare surname, no title, when there is an author', () => {
+    const fields: WebsiteFields = {
+      authors: ['Martin Clark'],
+      documentTitle: 'Koani v The Queen',
+      websiteName: 'Opinions on High',
+      documentType: 'Blog Post',
+      date: '18 October 2017',
+      url: 'http://blogs.unimelb.edu.au/opinionsonhigh/2017/10/18/koani-case-page/',
+      footnoteNumber: '6',
+    }
+    expect(generateWebsiteCitation(fields).subsequent).toBe('Clark (n 6).')
+  })
+
+  it('uses the title alone when there is no author', () => {
+    const fields: WebsiteFields = {
+      documentTitle: 'Privacy',
+      websiteName: 'Office of the Australian Information Commissioner',
+      documentType: 'Web Page',
+      url: 'https://www.oaic.gov.au/privacy',
+      footnoteNumber: '2',
+    }
+    expect(generateWebsiteCitation(fields).subsequent).toBe('‘Privacy’ (n 2).')
+  })
+})

@@ -5,9 +5,9 @@ import {
   formatAuthorList,
   formatBibliographyAuthorList,
   formatPinpoint,
+  formatSubsequentAuthorList,
   italicize,
   joinParts,
-  lastName,
   quote,
   stripTrailingFullStop,
 } from './utils'
@@ -26,12 +26,26 @@ function buildCitationCore(fields: JournalFields): string {
   return joinParts([yearPart, volumeIssue, italicize(fields.journalName), fields.startingPage])
 }
 
+/**
+ * AGLC4 r 1.4.1's own default for a secondary source is a BARE 'Author Surname (n X) Pinpoint' —
+ * a title is only added when several works by the same author are cited (eg '61 Rubenstein,
+ * Australian Citizenship Law in Context (n 59) 48, 65–74.'), something this app can't detect,
+ * since every citation is generated independently with no knowledge of a student's other
+ * footnotes. The student's own explicit shortTitle is treated as the signal that they already
+ * know disambiguation is needed. Where there's no author at all — an unsigned article, r 1.4.1's
+ * own note: 'Where there is no author or editor, the title... should be included in place of the
+ * author's surname' — the title stands in for the surname entirely rather than being dropped too.
+ */
 function formatSubsequent(fields: JournalFields): string {
-  const surname = lastName(fields.authors[0] ?? '')
-  const shortTitle = fields.shortTitle || fields.articleTitle
+  const surnames = formatSubsequentAuthorList(fields.authors ?? [])
   const footnoteNumber = fields.footnoteNumber || '1'
   const pinpoint = fields.pinpoint ? ` ${fields.pinpoint.trim()}` : ''
-  return ensureFullStop(`${surname}, ${quote(shortTitle)} (n ${footnoteNumber})${pinpoint}`)
+
+  if (!surnames) {
+    return ensureFullStop(`${quote(fields.shortTitle || fields.articleTitle)} (n ${footnoteNumber})${pinpoint}`)
+  }
+  const titlePart = fields.shortTitle ? `, ${quote(fields.shortTitle)}` : ''
+  return ensureFullStop(`${surnames}${titlePart} (n ${footnoteNumber})${pinpoint}`)
 }
 
 export function generateJournalCitation(fields: JournalFields): CitationResult {

@@ -81,25 +81,27 @@ export default function ReportForm({ fields, onChange }: ReportFormProps) {
         />
       </Field>
 
-      <Field label="Document type">
-        <input
-          className={inputClass}
-          type="text"
-          placeholder="Report"
-          value={fields.documentType}
-          onChange={(e) => update({ documentType: e.target.value })}
-        />
-      </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Document type">
+          <input
+            className={inputClass}
+            type="text"
+            placeholder="Report"
+            value={fields.documentType}
+            onChange={(e) => update({ documentType: e.target.value })}
+          />
+        </Field>
 
-      <Field label="Series number" optional>
-        <input
-          className={inputClass}
-          type="text"
-          placeholder="Report No 129"
-          value={fields.seriesNumber ?? ''}
-          onChange={(e) => update({ seriesNumber: e.target.value })}
-        />
-      </Field>
+        <Field label="Series number" optional>
+          <input
+            className={inputClass}
+            type="text"
+            placeholder="Report No 129"
+            value={fields.seriesNumber ?? ''}
+            onChange={(e) => update({ seriesNumber: e.target.value })}
+          />
+        </Field>
+      </div>
 
       <Field label="Date">
         <input
@@ -108,6 +110,16 @@ export default function ReportForm({ fields, onChange }: ReportFormProps) {
           placeholder="December 2015"
           value={fields.date}
           onChange={(e) => update({ date: e.target.value })}
+        />
+      </Field>
+
+      <Field label="URL" optional>
+        <input
+          className={inputClass}
+          type="text"
+          placeholder="https://example.com/report.pdf"
+          value={fields.url ?? ''}
+          onChange={(e) => update({ url: e.target.value })}
         />
       </Field>
 

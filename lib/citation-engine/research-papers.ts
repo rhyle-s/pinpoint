@@ -3,8 +3,8 @@ import {
   ensureFullStop,
   formatAuthorList,
   formatBibliographyAuthorList,
+  formatSubsequentAuthorList,
   joinParts,
-  lastName,
   quote,
   stripTrailingFullStop,
 } from './utils'
@@ -28,11 +28,17 @@ export function generateResearchPaperCitation(fields: ResearchPaperFields): Cita
   const footnote = ensureFullStop(`${authorPrefix}${quotedTitle} ${parenthetical}${pinpoint}`)
   const bibliography = stripTrailingFullStop(`${bibliographyAuthorPrefix}${quotedTitle} ${parenthetical}`)
 
-  const surname = authors.length > 0 ? lastName(authors[0]) : ''
-  const subsequentAuthorPrefix = surname ? `${surname}, ` : ''
-  const shortTitle = quote(fields.shortTitle || fields.title)
+  // AGLC4 r 1.4.1's own default is a BARE 'Author Surname (n X) Pinpoint' (surnames, not the
+  // footnote's own full names) — a title is only added when several works by the same author are
+  // cited, undetectable here since each citation is generated independently; an explicit
+  // shortTitle is treated as the student's own signal that disambiguation is needed.
+  const surnames = formatSubsequentAuthorList(authors)
   const footnoteNumber = fields.footnoteNumber || '1'
-  const subsequent = ensureFullStop(`${subsequentAuthorPrefix}${shortTitle} (n ${footnoteNumber})${pinpoint}`)
+  const subsequent = !surnames
+    ? ensureFullStop(`${quote(fields.shortTitle || fields.title)} (n ${footnoteNumber})${pinpoint}`)
+    : ensureFullStop(
+        `${surnames}${fields.shortTitle ? `, ${quote(fields.shortTitle)}` : ''} (n ${footnoteNumber})${pinpoint}`,
+      )
 
   return {
     footnote,

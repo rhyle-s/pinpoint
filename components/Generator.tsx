@@ -2,20 +2,29 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { generateCitationSync } from '@/lib/citation-engine'
+import { otherLegislativeMaterialBadge } from '@/lib/citation-engine/other-legislative-material'
+import { internationalMaterialBadge } from '@/lib/citation-engine/international-material'
+import { foreignDomesticRuleLabel } from '@/lib/citation-engine/foreign-domestic'
+import { europeanMaterialsRuleLabel } from '@/lib/citation-engine/european-materials'
+import { otherSourcesBadge } from '@/lib/citation-engine/other-sources'
 import { validateCitationAction } from '@/app/actions'
+import { mapFieldsAcrossSourceType } from '@/lib/autofill/cross-type-map'
 import { changedKeys, mergeAutofillFields } from '@/lib/autofill/merge'
-import { AutofillResult } from '@/lib/autofill/types'
+import { AutofillFields, AutofillResult } from '@/lib/autofill/types'
 import {
   BookFields,
   CaseFields,
   CitationFields,
   CitationResult,
+  InternationalMaterialFields,
   JournalFields,
   LegislationFields,
+  NewspaperFields,
+  OtherLegislativeMaterialFields,
+  OtherSourcesFields,
   ReportFields,
   ResearchPaperFields,
   SourceType,
-  TreatyFields,
   WebsiteFields,
 } from '@/lib/citation-engine/types'
 import AutofillBar from './AutofillBar'
@@ -27,7 +36,10 @@ import BookForm from './BookForm'
 import ReportForm from './ReportForm'
 import ResearchPaperForm from './ResearchPaperForm'
 import WebsiteForm from './WebsiteForm'
-import TreatyForm from './TreatyForm'
+import NewspaperForm from './NewspaperForm'
+import OtherLegislativeMaterialForm from './OtherLegislativeMaterialForm'
+import InternationalMaterialForm from './InternationalMaterialForm'
+import OtherSourcesForm from './OtherSourcesForm'
 import CitationOutput from './CitationOutput'
 
 const DEFAULT_CASE_FIELDS: CaseFields = {
@@ -94,12 +106,37 @@ const DEFAULT_WEBSITE_FIELDS: WebsiteFields = {
   url: 'http://www.hcourt.gov.au/justices/current/justice-james-edelman',
 }
 
-const DEFAULT_TREATY_FIELDS: TreatyFields = {
+const DEFAULT_NEWSPAPER_FIELDS: NewspaperFields = {
+  authors: ['Isobel Roe', 'Jamie McKinnell'],
+  articleTitle: 'Former Alan Jones colleague recalls telling rival Ray Hadley of alleged indecent assault',
+  newspaperName: 'ABC News',
+  date: '17 August 2026',
+  url: 'https://www.abc.net.au/news/2026-08-17/alan-jones-complainant-c-ray-hadley-peter-fitzsimons/107045376',
+}
+
+const DEFAULT_OTHER_LEGISLATIVE_MATERIAL_FIELDS: OtherLegislativeMaterialFields = {
+  subtype: 'bill',
+  billTitle: 'Corporations Amendment (Crowd-Sourced Funding) Bill',
+  billYear: '2015',
+  billJurisdiction: 'Cth',
+}
+
+const DEFAULT_INTERNATIONAL_MATERIAL_FIELDS: InternationalMaterialFields = {
+  subtype: 'treaty',
   title: 'International Covenant on Economic, Social and Cultural Rights',
   treatyType: 'multilateral',
   openedForSignature: '16 December 1966',
   treatySeries: '993 UNTS 3',
   enteredIntoForce: '3 January 1976',
+}
+
+const DEFAULT_OTHER_SOURCES_FIELDS: OtherSourcesFields = {
+  subtype: 'dictionary',
+  dictionaryTitle: 'Macquarie Dictionary',
+  dictionaryEdition: '5th ed',
+  dictionaryYear: '2009',
+  dictionaryEntryTitle: 'demise',
+  dictionaryDefNumber: '4',
 }
 
 // Truly-empty templates, distinct from the DEFAULT_* demo data above. Every autofill rebuilds
@@ -124,7 +161,10 @@ const BLANK_RESEARCH_PAPER_FIELDS: ResearchPaperFields = {
   date: '',
 }
 const BLANK_WEBSITE_FIELDS: WebsiteFields = { documentTitle: '', websiteName: '', documentType: 'Web Page', url: '' }
-const BLANK_TREATY_FIELDS: TreatyFields = { title: '', treatyType: 'multilateral', treatySeries: '' }
+const BLANK_NEWSPAPER_FIELDS: NewspaperFields = { articleTitle: '', newspaperName: '', date: '', url: '' }
+const BLANK_OTHER_LEGISLATIVE_MATERIAL_FIELDS: OtherLegislativeMaterialFields = { subtype: 'bill' }
+const BLANK_INTERNATIONAL_MATERIAL_FIELDS: InternationalMaterialFields = { subtype: 'treaty' }
+const BLANK_OTHER_SOURCES_FIELDS: OtherSourcesFields = { subtype: 'dictionary' }
 
 const CASE_RULES: Record<CaseFields['reportType'], { footnote: string; subsequent: string; bibliography: string }> = {
   reported: { footnote: 'AGLC4 r 2.2', subsequent: 'AGLC4 r 1.4.4', bibliography: 'AGLC4 r 2.2' },
@@ -141,7 +181,36 @@ const BOOK_RULES: Record<BookFields['bookType'], { footnote: string; subsequent:
 const REPORT_RULES = { footnote: 'AGLC4 r 7.1.1', subsequent: 'AGLC4 r 1.4.4', bibliography: 'AGLC4 r 7.1.1' }
 const RESEARCH_PAPER_RULES = { footnote: 'AGLC4 ch 7', subsequent: 'AGLC4 r 1.4.4', bibliography: 'AGLC4 ch 7' }
 const WEBSITE_RULES = { footnote: 'AGLC4 r 7.15', subsequent: 'AGLC4 r 1.4.4', bibliography: 'AGLC4 r 7.15' }
-const TREATY_RULES = { footnote: 'AGLC4 r 8.1–8.7', subsequent: 'AGLC4 r 1.4.4', bibliography: 'AGLC4 r 8.1–8.7' }
+const NEWSPAPER_RULES = { footnote: 'AGLC4 r 7.11.2', subsequent: 'AGLC4 r 1.4.4', bibliography: 'AGLC4 r 7.11.2' }
+const OTHER_LEGISLATIVE_MATERIAL_RULES: Record<
+  OtherLegislativeMaterialFields['subtype'],
+  { footnote: string; subsequent: string; bibliography: string }
+> = {
+  bill: { footnote: 'AGLC4 r 3.2', subsequent: 'AGLC4 r 1.4.4', bibliography: 'AGLC4 r 3.2' },
+  explanatoryMaterial: { footnote: 'AGLC4 r 3.7', subsequent: 'AGLC4 r 1.4.4', bibliography: 'AGLC4 r 3.7' },
+  gazette: { footnote: 'AGLC4 r 3.9.1', subsequent: 'AGLC4 r 1.4.4', bibliography: 'AGLC4 r 3.9.1' },
+  practiceDirection: { footnote: 'AGLC4 ch 3', subsequent: 'AGLC4 r 1.4.4', bibliography: 'AGLC4 ch 3' },
+  constitution: { footnote: 'AGLC4 r 3.6', subsequent: 'AGLC4 r 1.4.4', bibliography: 'AGLC4 r 3.6' },
+}
+const INTERNATIONAL_MATERIAL_RULES: Record<
+  Exclude<InternationalMaterialFields['subtype'], 'foreignDomestic' | 'europeanUnion'>,
+  { footnote: string; subsequent: string; bibliography: string }
+> = {
+  treaty: { footnote: 'AGLC4 r 8.1–8.7', subsequent: 'AGLC4 r 1.4.4', bibliography: 'AGLC4 r 8.1–8.7' },
+  unDocument: { footnote: 'AGLC4 r 9.2.4', subsequent: 'AGLC4 r 1.4.4', bibliography: 'AGLC4 r 9.2.4' },
+}
+const OTHER_SOURCES_RULES: Record<
+  OtherSourcesFields['subtype'],
+  { footnote: string; subsequent: string; bibliography: string }
+> = {
+  dictionary: { footnote: 'AGLC4 r 7.6', subsequent: 'AGLC4 r 1.4.4', bibliography: 'AGLC4 r 7.6' },
+  legalEncyclopedia: { footnote: 'AGLC4 r 7.7', subsequent: 'AGLC4 r 1.4.4', bibliography: 'AGLC4 r 7.7' },
+  speech: { footnote: 'AGLC4 r 7.3', subsequent: 'AGLC4 r 1.4.4', bibliography: 'AGLC4 r 7.3' },
+  pressRelease: { footnote: 'AGLC4 r 7.4', subsequent: 'AGLC4 r 1.4.4', bibliography: 'AGLC4 r 7.4' },
+  abs: { footnote: 'AGLC4 r 7.1.5', subsequent: 'AGLC4 r 1.4.4', bibliography: 'AGLC4 r 7.1.5' },
+  filmOrMedia: { footnote: 'AGLC4 r 7.14', subsequent: 'AGLC4 r 1.4.4', bibliography: 'AGLC4 r 7.14' },
+  socialMedia: { footnote: 'AGLC4 r 7.16', subsequent: 'AGLC4 r 1.4.4', bibliography: 'AGLC4 r 7.16' },
+}
 
 const VALIDATION_DEBOUNCE_MS = 800
 
@@ -153,7 +222,10 @@ const ALL_SOURCE_TYPES: SourceType[] = [
   'report',
   'researchPaper',
   'website',
-  'treaty',
+  'newspaper',
+  'otherLegislativeMaterial',
+  'internationalMaterial',
+  'otherSources',
 ]
 
 // Pinpoint fields identify a spot within *this particular* citation (a page, a section) rather
@@ -167,7 +239,36 @@ const PINPOINT_KEYS: Record<SourceType, readonly string[]> = {
   report: ['pinpoint'],
   researchPaper: ['pinpoint'],
   website: ['pinpoint'],
-  treaty: ['pinpoint'],
+  newspaper: ['pinpoint'],
+  otherLegislativeMaterial: ['pinpoint', 'constitutionPinpointType', 'constitutionPinpointValue'],
+  internationalMaterial: ['pinpoint'],
+  // Legal Encyclopedia's own structural pinpoint (encyclopediaParagraph) is a required part of the
+  // citation itself, not a free-standing "where in this source" pinpoint like the shared `pinpoint`
+  // field every other subtype here uses — see types.ts — so it's included here too.
+  otherSources: ['pinpoint', 'encyclopediaParagraph'],
+}
+
+// Like pinpoint fields, these classify *what kind* of source this is rather than describing the
+// source's own content — every fresh autofill should reflect that classification anew (a book
+// autofill always defaults to a whole book, per mapFieldsToSourceType), even if the student
+// manually switched the selector for whatever they were previously citing. Without this, a
+// student who switches one book to "Book chapter" then uploads a second, unrelated book PDF
+// would see it stuck on "Book chapter" too, since selecting the option marks `bookType` touched
+// the same as typing into any other field.
+const CLASSIFICATION_KEYS: Partial<Record<SourceType, readonly string[]>> = {
+  book: ['bookType'],
+  otherLegislativeMaterial: ['subtype'],
+  // foreignCountry/foreignCategory are a second-level classification nested inside the
+  // 'foreignDomestic' subtype (see ForeignDomesticForm.tsx); foreignCaseReportType is a
+  // third-level classification nested inside foreignCategory === 'case' (reported vs either
+  // unreported form); euCategory is the second-level equivalent for the 'europeanUnion' subtype
+  // (see EuropeanMaterialsForm.tsx) — without these, correcting a wrong country/category/report-
+  // type/euCategory guess would suffer the exact same "stuck on stale selection" bug already fixed
+  // for bookType and subtype itself.
+  internationalMaterial: ['subtype', 'foreignCountry', 'foreignCategory', 'foreignCaseReportType', 'euCategory'],
+  // mediaFormat is a second-level classification nested inside the 'filmOrMedia' subtype (see
+  // OtherSourcesForm.tsx) — same reasoning as foreignCountry/foreignCategory above.
+  otherSources: ['subtype', 'mediaFormat'],
 }
 
 interface GeneratorProps {
@@ -183,7 +284,13 @@ export default function Generator({ initialSourceType }: GeneratorProps) {
   const [reportFields, setReportFields] = useState<ReportFields>(DEFAULT_REPORT_FIELDS)
   const [researchPaperFields, setResearchPaperFields] = useState<ResearchPaperFields>(DEFAULT_RESEARCH_PAPER_FIELDS)
   const [websiteFields, setWebsiteFields] = useState<WebsiteFields>(DEFAULT_WEBSITE_FIELDS)
-  const [treatyFields, setTreatyFields] = useState<TreatyFields>(DEFAULT_TREATY_FIELDS)
+  const [newspaperFields, setNewspaperFields] = useState<NewspaperFields>(DEFAULT_NEWSPAPER_FIELDS)
+  const [otherLegislativeMaterialFields, setOtherLegislativeMaterialFields] =
+    useState<OtherLegislativeMaterialFields>(DEFAULT_OTHER_LEGISLATIVE_MATERIAL_FIELDS)
+  const [internationalMaterialFields, setInternationalMaterialFields] = useState<InternationalMaterialFields>(
+    DEFAULT_INTERNATIONAL_MATERIAL_FIELDS,
+  )
+  const [otherSourcesFields, setOtherSourcesFields] = useState<OtherSourcesFields>(DEFAULT_OTHER_SOURCES_FIELDS)
 
   // Tracks exactly which fields, per source type, the student has personally typed into — so a
   // fresh autofill can rebuild everything else from scratch while leaving those specific edits
@@ -194,16 +301,36 @@ export default function Generator({ initialSourceType }: GeneratorProps) {
   const touchedFieldsRef = useRef(touchedFields)
   touchedFieldsRef.current = touchedFields
 
+  // Every field starts pre-filled with curated demo data (DEFAULT_*_FIELDS above), purely so a
+  // student browsing the tabs before citing anything real sees a worked example rather than a
+  // blank form — that demo data must never itself get cross-mapped between tabs (see
+  // handleSourceTypeSelect), only real citation data (from an autofill or the student's own
+  // typing). Tracked per type, not as one global flag: cross-mapping must also only ever happen
+  // the *first* time a student arrives at a given type, never on a return visit — otherwise
+  // switching Journal → Book → back to Journal would rebuild the journal fields from blank a
+  // second time and silently drop volume/issue/journalName/startingPage, which have no equivalent
+  // in the Book shape to map back from (confirmed live: exactly this happened before this map was
+  // introduced). Flips permanently false→true per type on its first real autofill or keystroke,
+  // or the first time it's the target of a cross-map.
+  const [typeHasRealContent, setTypeHasRealContent] = useState<Record<SourceType, boolean>>(
+    () => Object.fromEntries(ALL_SOURCE_TYPES.map((type) => [type, false])) as Record<SourceType, boolean>,
+  )
+
+  function markTypeHasRealContent(type: SourceType) {
+    setTypeHasRealContent((prev) => (prev[type] ? prev : { ...prev, [type]: true }))
+  }
+
   function markFieldsTouched(type: SourceType, keys: readonly string[]) {
     if (keys.length === 0) return
+    markTypeHasRealContent(type)
     setTouchedFields((prev) => ({ ...prev, [type]: new Set(Array.from(prev[type]).concat(keys)) }))
   }
 
-  // A fresh autofill should never protect a pinpoint field, even if the student typed into it
-  // for a previous citation — see PINPOINT_KEYS.
+  // A fresh autofill should never protect a pinpoint field or a classification field, even if
+  // the student touched it for a previous citation — see PINPOINT_KEYS and CLASSIFICATION_KEYS.
   function protectedKeysForAutofill(type: SourceType): Set<string> {
-    const pinpointKeys = new Set(PINPOINT_KEYS[type])
-    return new Set(Array.from(touchedFieldsRef.current[type]).filter((key) => !pinpointKeys.has(key)))
+    const neverProtect = new Set([...PINPOINT_KEYS[type], ...(CLASSIFICATION_KEYS[type] ?? [])])
+    return new Set(Array.from(touchedFieldsRef.current[type]).filter((key) => !neverProtect.has(key)))
   }
 
   const [result, setResult] = useState<CitationResult | null>(null)
@@ -214,7 +341,30 @@ export default function Generator({ initialSourceType }: GeneratorProps) {
   // AI-check spinner keeps the panel from claiming anything about the outgoing citation while a
   // new one is on the way.
   const [autofillLoading, setAutofillLoading] = useState(false)
+  // What the last autofill left the student to act on — a "review the fields" prompt (whenever the
+  // result wasn't high-confidence), the "matched via CrossRef" note, and/or the verify link. Shown
+  // as a slim banner right above the form it's about, rather than stacked under the autofill input.
+  const [autofillNotice, setAutofillNotice] = useState<{
+    message?: string
+    verifyUrl?: string
+    review: boolean
+  } | null>(null)
   const requestIdRef = useRef(0)
+
+  // A warning note (missing-field / unreported-case reminder — see warnings.ts) describes the
+  // *previous* citation. The instant a new autofill fetch or paste-details attempt starts, that
+  // note is stale — clear it immediately rather than leaving it on screen until the new citation's
+  // fields actually land (which is the fields-watching effect below, and can be several seconds
+  // away for a slow fetch). The rest of the citation panel deliberately stays put so the screen
+  // doesn't go blank mid-fetch; only the warning goes.
+  useEffect(() => {
+    if (autofillLoading) {
+      setResult((prev) => (prev?.warnings?.length ? { ...prev, warnings: undefined } : prev))
+      // The previous autofill's notice is about content that's being replaced — clear it the
+      // moment a new attempt starts, same as the stale warning above.
+      setAutofillNotice(null)
+    }
+  }, [autofillLoading])
 
   const currentFields: CitationFields | null = useMemo(() => {
     switch (selectedSourceType) {
@@ -232,8 +382,14 @@ export default function Generator({ initialSourceType }: GeneratorProps) {
         return researchPaperFields
       case 'website':
         return websiteFields
-      case 'treaty':
-        return treatyFields
+      case 'newspaper':
+        return newspaperFields
+      case 'otherLegislativeMaterial':
+        return otherLegislativeMaterialFields
+      case 'internationalMaterial':
+        return internationalMaterialFields
+      case 'otherSources':
+        return otherSourcesFields
       default:
         return null
     }
@@ -246,7 +402,10 @@ export default function Generator({ initialSourceType }: GeneratorProps) {
     reportFields,
     researchPaperFields,
     websiteFields,
-    treatyFields,
+    newspaperFields,
+    otherLegislativeMaterialFields,
+    internationalMaterialFields,
+    otherSourcesFields,
   ])
 
   useEffect(() => {
@@ -278,18 +437,16 @@ export default function Generator({ initialSourceType }: GeneratorProps) {
     return () => clearTimeout(timer)
   }, [selectedSourceType, currentFields])
 
-  function handleAutofill(autofillResult: AutofillResult) {
-    const type = autofillResult.detectedSourceType
-
+  // Rebuilds a single source type's fields from `fields` (an autofill result, or a best-effort
+  // carryover from a different type the student just switched away from), respecting whatever
+  // that type's own protected/never-protected keys are. Shared by handleAutofill and
+  // handleSourceTypeSelect so both routes into "this type's fields just changed" behave
+  // identically rather than maintaining two parallel field-by-field switches.
+  function applyFieldsForType(type: SourceType, fields: AutofillFields) {
     switch (type) {
       case 'case':
         setCaseFields((prev) =>
-          mergeAutofillFields(
-            BLANK_CASE_FIELDS,
-            prev,
-            autofillResult.fields as Partial<CaseFields>,
-            protectedKeysForAutofill('case'),
-          ),
+          mergeAutofillFields(BLANK_CASE_FIELDS, prev, fields as Partial<CaseFields>, protectedKeysForAutofill('case')),
         )
         break
       case 'legislation':
@@ -297,7 +454,7 @@ export default function Generator({ initialSourceType }: GeneratorProps) {
           mergeAutofillFields(
             BLANK_LEGISLATION_FIELDS,
             prev,
-            autofillResult.fields as Partial<LegislationFields>,
+            fields as Partial<LegislationFields>,
             protectedKeysForAutofill('legislation'),
           ),
         )
@@ -307,19 +464,14 @@ export default function Generator({ initialSourceType }: GeneratorProps) {
           mergeAutofillFields(
             BLANK_JOURNAL_FIELDS,
             prev,
-            autofillResult.fields as Partial<JournalFields>,
+            fields as Partial<JournalFields>,
             protectedKeysForAutofill('journal'),
           ),
         )
         break
       case 'book':
         setBookFields((prev) =>
-          mergeAutofillFields(
-            BLANK_BOOK_FIELDS,
-            prev,
-            autofillResult.fields as Partial<BookFields>,
-            protectedKeysForAutofill('book'),
-          ),
+          mergeAutofillFields(BLANK_BOOK_FIELDS, prev, fields as Partial<BookFields>, protectedKeysForAutofill('book')),
         )
         break
       case 'report':
@@ -327,7 +479,7 @@ export default function Generator({ initialSourceType }: GeneratorProps) {
           mergeAutofillFields(
             BLANK_REPORT_FIELDS,
             prev,
-            autofillResult.fields as Partial<ReportFields>,
+            fields as Partial<ReportFields>,
             protectedKeysForAutofill('report'),
           ),
         )
@@ -337,7 +489,7 @@ export default function Generator({ initialSourceType }: GeneratorProps) {
           mergeAutofillFields(
             BLANK_RESEARCH_PAPER_FIELDS,
             prev,
-            autofillResult.fields as Partial<ResearchPaperFields>,
+            fields as Partial<ResearchPaperFields>,
             protectedKeysForAutofill('researchPaper'),
           ),
         )
@@ -347,23 +499,83 @@ export default function Generator({ initialSourceType }: GeneratorProps) {
           mergeAutofillFields(
             BLANK_WEBSITE_FIELDS,
             prev,
-            autofillResult.fields as Partial<WebsiteFields>,
+            fields as Partial<WebsiteFields>,
             protectedKeysForAutofill('website'),
           ),
         )
         break
-      case 'treaty':
-        setTreatyFields((prev) =>
+      case 'newspaper':
+        setNewspaperFields((prev) =>
           mergeAutofillFields(
-            BLANK_TREATY_FIELDS,
+            BLANK_NEWSPAPER_FIELDS,
             prev,
-            autofillResult.fields as Partial<TreatyFields>,
-            protectedKeysForAutofill('treaty'),
+            fields as Partial<NewspaperFields>,
+            protectedKeysForAutofill('newspaper'),
+          ),
+        )
+        break
+      case 'otherLegislativeMaterial':
+        setOtherLegislativeMaterialFields((prev) =>
+          mergeAutofillFields(
+            BLANK_OTHER_LEGISLATIVE_MATERIAL_FIELDS,
+            prev,
+            fields as Partial<OtherLegislativeMaterialFields>,
+            protectedKeysForAutofill('otherLegislativeMaterial'),
+          ),
+        )
+        break
+      case 'internationalMaterial':
+        setInternationalMaterialFields((prev) =>
+          mergeAutofillFields(
+            BLANK_INTERNATIONAL_MATERIAL_FIELDS,
+            prev,
+            fields as Partial<InternationalMaterialFields>,
+            protectedKeysForAutofill('internationalMaterial'),
+          ),
+        )
+        break
+      case 'otherSources':
+        setOtherSourcesFields((prev) =>
+          mergeAutofillFields(
+            BLANK_OTHER_SOURCES_FIELDS,
+            prev,
+            fields as Partial<OtherSourcesFields>,
+            protectedKeysForAutofill('otherSources'),
           ),
         )
         break
     }
+  }
 
+  function handleAutofill(autofillResult: AutofillResult) {
+    markTypeHasRealContent(autofillResult.detectedSourceType)
+    applyFieldsForType(autofillResult.detectedSourceType, autofillResult.fields)
+    setSelectedSourceType(autofillResult.detectedSourceType)
+
+    const review = autofillResult.confidence !== 'high'
+    setAutofillNotice(
+      review || autofillResult.message || autofillResult.verifyUrl
+        ? { message: autofillResult.message, verifyUrl: autofillResult.verifyUrl, review }
+        : null,
+    )
+  }
+
+  // A student clicking a different source-type tab is usually correcting a wrong guess (the app
+  // detected 'journal' but it's actually a book chapter) rather than starting an unrelated new
+  // citation, so — unlike a fresh autofill, which deliberately discards the previous source's
+  // pinpoint via PINPOINT_KEYS — this carries over whatever cross-type concepts apply (see
+  // mapFieldsAcrossSourceType) and reuses the same protected-key merge as a real autofill, so it
+  // never clobbers anything the student already typed into the target type. Only fires the
+  // *first* time the target type is visited (typeHasRealContent), and only once the *current*
+  // type actually has something worth carrying over — both gates are needed: the first keeps a
+  // later revisit from re-mapping over (and silently dropping) fields the target type has no
+  // equivalent for, the second keeps this from firing while every tab is still on pristine demo
+  // data.
+  function handleSourceTypeSelect(type: SourceType) {
+    if (type !== selectedSourceType && typeHasRealContent[selectedSourceType] && !typeHasRealContent[type] && currentFields) {
+      applyFieldsForType(type, mapFieldsAcrossSourceType(selectedSourceType, currentFields, type))
+      markTypeHasRealContent(type)
+    }
     setSelectedSourceType(type)
   }
 
@@ -382,13 +594,94 @@ export default function Generator({ initialSourceType }: GeneratorProps) {
                 ? RESEARCH_PAPER_RULES
                 : selectedSourceType === 'website'
                   ? WEBSITE_RULES
-                  : TREATY_RULES
+                  : selectedSourceType === 'newspaper'
+                    ? NEWSPAPER_RULES
+                    : selectedSourceType === 'otherLegislativeMaterial'
+                      ? OTHER_LEGISLATIVE_MATERIAL_RULES[otherLegislativeMaterialFields.subtype]
+                      : selectedSourceType === 'internationalMaterial'
+                        ? internationalMaterialFields.subtype === 'foreignDomestic'
+                          ? {
+                              footnote: foreignDomesticRuleLabel(internationalMaterialFields),
+                              subsequent: 'AGLC4 r 1.4.4',
+                              bibliography: foreignDomesticRuleLabel(internationalMaterialFields),
+                            }
+                          : internationalMaterialFields.subtype === 'europeanUnion'
+                            ? {
+                                footnote: europeanMaterialsRuleLabel(internationalMaterialFields),
+                                subsequent: 'AGLC4 r 14.6',
+                                bibliography: europeanMaterialsRuleLabel(internationalMaterialFields),
+                              }
+                            : INTERNATIONAL_MATERIAL_RULES[internationalMaterialFields.subtype]
+                        : OTHER_SOURCES_RULES[otherSourcesFields.subtype]
+
+  const badge =
+    selectedSourceType === 'otherLegislativeMaterial'
+      ? otherLegislativeMaterialBadge(otherLegislativeMaterialFields)
+      : selectedSourceType === 'internationalMaterial'
+        ? internationalMaterialBadge(internationalMaterialFields)
+        : selectedSourceType === 'otherSources'
+          ? otherSourcesBadge(otherSourcesFields)
+          : undefined
 
   return (
     <div className="space-y-8">
-      <AutofillBar onAutofill={handleAutofill} onLoadingChange={setAutofillLoading} />
+      <div className="space-y-3">
+        <AutofillBar onAutofill={handleAutofill} onLoadingChange={setAutofillLoading} />
 
-      <SourceTypeSelector selected={selectedSourceType} onSelect={setSelectedSourceType} />
+        {autofillNotice && (
+          <div className="flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="mt-0.5 shrink-0 text-amber-600"
+            >
+              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+              <path d="M12 9v4" />
+              <path d="M12 17h.01" />
+            </svg>
+            <div className="min-w-0 flex-1 space-y-1">
+              {autofillNotice.message ? (
+                <p className="text-amber-700">{autofillNotice.message}</p>
+              ) : autofillNotice.review ? (
+                <p className="font-medium text-amber-800">
+                  Autofilled — check the fields against the source before relying on them.
+                </p>
+              ) : null}
+              {autofillNotice.verifyUrl && (
+                <a
+                  href={autofillNotice.verifyUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 font-medium text-primary underline hover:text-[#134b85]"
+                >
+                  Open the source to check it&rsquo;s the right work
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M7 17 17 7" />
+                    <path d="M7 7h10v10" />
+                  </svg>
+                </a>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setAutofillNotice(null)}
+              aria-label="Dismiss"
+              className="-mr-1 shrink-0 text-amber-400 transition-colors hover:text-amber-700"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 6 6 18" />
+                <path d="m6 6 12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
+      </div>
+
+      <SourceTypeSelector selected={selectedSourceType} onSelect={handleSourceTypeSelect} />
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <div className="rounded-xl border border-gray-200 p-6">
@@ -455,19 +748,46 @@ export default function Generator({ initialSourceType }: GeneratorProps) {
               }}
             />
           )}
-          {selectedSourceType === 'treaty' && (
-            <TreatyForm
-              fields={treatyFields}
+          {selectedSourceType === 'newspaper' && (
+            <NewspaperForm
+              fields={newspaperFields}
               onChange={(fields) => {
-                markFieldsTouched('treaty', changedKeys(treatyFields, fields))
-                setTreatyFields(fields)
+                markFieldsTouched('newspaper', changedKeys(newspaperFields, fields))
+                setNewspaperFields(fields)
+              }}
+            />
+          )}
+          {selectedSourceType === 'otherLegislativeMaterial' && (
+            <OtherLegislativeMaterialForm
+              fields={otherLegislativeMaterialFields}
+              onChange={(fields) => {
+                markFieldsTouched('otherLegislativeMaterial', changedKeys(otherLegislativeMaterialFields, fields))
+                setOtherLegislativeMaterialFields(fields)
+              }}
+            />
+          )}
+          {selectedSourceType === 'internationalMaterial' && (
+            <InternationalMaterialForm
+              fields={internationalMaterialFields}
+              onChange={(fields) => {
+                markFieldsTouched('internationalMaterial', changedKeys(internationalMaterialFields, fields))
+                setInternationalMaterialFields(fields)
+              }}
+            />
+          )}
+          {selectedSourceType === 'otherSources' && (
+            <OtherSourcesForm
+              fields={otherSourcesFields}
+              onChange={(fields) => {
+                markFieldsTouched('otherSources', changedKeys(otherSourcesFields, fields))
+                setOtherSourcesFields(fields)
               }}
             />
           )}
         </div>
 
         <div>
-          <CitationOutput result={result} validating={validating || autofillLoading} rules={rules} />
+          <CitationOutput result={result} validating={validating || autofillLoading} rules={rules} badge={badge} />
         </div>
       </div>
     </div>

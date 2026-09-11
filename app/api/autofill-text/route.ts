@@ -6,6 +6,11 @@ const REQUEST_TIMEOUT_MS = 20_000
 const MIN_TEXT_LENGTH = 20
 const MAX_TEXT_LENGTH = 8000
 
+// See app/api/autofill/route.ts — keeps the platform from killing the function before the internal
+// Promise.race cap can return timeoutResult(). This path does no fetching (pasted text only), so a
+// smaller ceiling than the URL/PDF routes is enough.
+export const maxDuration = 30
+
 function timeoutResult(): AutofillResult {
   return {
     detectedSourceType: 'website',

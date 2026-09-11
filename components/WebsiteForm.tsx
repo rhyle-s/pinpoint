@@ -91,27 +91,29 @@ export default function WebsiteForm({ fields, onChange }: WebsiteFormProps) {
         />
       </Field>
 
-      <Field label="Document type">
-        <select
-          className={inputClass}
-          value={fields.documentType}
-          onChange={(e) => update({ documentType: e.target.value as WebsiteFields['documentType'] })}
-        >
-          <option value="Web Page">Web Page</option>
-          <option value="Blog Post">Blog Post</option>
-          <option value="Forum Post">Forum Post</option>
-        </select>
-      </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Document type">
+          <select
+            className={inputClass}
+            value={fields.documentType}
+            onChange={(e) => update({ documentType: e.target.value as WebsiteFields['documentType'] })}
+          >
+            <option value="Web Page">Web Page</option>
+            <option value="Blog Post">Blog Post</option>
+            <option value="Forum Post">Forum Post</option>
+          </select>
+        </Field>
 
-      <Field label="Date" optional>
-        <input
-          className={inputClass}
-          type="text"
-          placeholder="18 October 2017"
-          value={fields.date ?? ''}
-          onChange={(e) => update({ date: e.target.value })}
-        />
-      </Field>
+        <Field label="Date" optional>
+          <input
+            className={inputClass}
+            type="text"
+            placeholder="18 October 2017"
+            value={fields.date ?? ''}
+            onChange={(e) => update({ date: e.target.value })}
+          />
+        </Field>
+      </div>
 
       <Field label="URL">
         <input

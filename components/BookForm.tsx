@@ -113,15 +113,6 @@ export default function BookForm({ fields, onChange }: BookFormProps) {
               onChange={(e) => update({ title: e.target.value })}
             />
           </Field>
-          <Field label="Edition" optional>
-            <input
-              className={inputClass}
-              type="text"
-              placeholder="2nd ed"
-              value={fields.edition ?? ''}
-              onChange={(e) => update({ edition: e.target.value })}
-            />
-          </Field>
           <Field label="Publisher">
             <input
               className={inputClass}
@@ -131,15 +122,26 @@ export default function BookForm({ fields, onChange }: BookFormProps) {
               onChange={(e) => update({ publisher: e.target.value })}
             />
           </Field>
-          <Field label="Year">
-            <input
-              className={inputClass}
-              type="text"
-              placeholder="2010"
-              value={fields.year}
-              onChange={(e) => update({ year: e.target.value })}
-            />
-          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Edition" optional>
+              <input
+                className={inputClass}
+                type="text"
+                placeholder="2nd ed"
+                value={fields.edition ?? ''}
+                onChange={(e) => update({ edition: e.target.value })}
+              />
+            </Field>
+            <Field label="Year">
+              <input
+                className={inputClass}
+                type="text"
+                placeholder="2010"
+                value={fields.year}
+                onChange={(e) => update({ year: e.target.value })}
+              />
+            </Field>
+          </div>
           <Field label="Pinpoint" optional>
             <input
               className={inputClass}
@@ -184,42 +186,46 @@ export default function BookForm({ fields, onChange }: BookFormProps) {
               onChange={(e) => update({ title: e.target.value })}
             />
           </Field>
-          <Field label="Publisher">
-            <input
-              className={inputClass}
-              type="text"
-              placeholder="Federation Press"
-              value={fields.publisher}
-              onChange={(e) => update({ publisher: e.target.value })}
-            />
-          </Field>
-          <Field label="Year">
-            <input
-              className={inputClass}
-              type="text"
-              placeholder="2000"
-              value={fields.year}
-              onChange={(e) => update({ year: e.target.value })}
-            />
-          </Field>
-          <Field label="Starting page">
-            <input
-              className={inputClass}
-              type="text"
-              placeholder="83"
-              value={fields.startingPage ?? ''}
-              onChange={(e) => update({ startingPage: e.target.value })}
-            />
-          </Field>
-          <Field label="Pinpoint" optional>
-            <input
-              className={inputClass}
-              type="text"
-              placeholder="90"
-              value={fields.pinpoint ?? ''}
-              onChange={(e) => update({ pinpoint: e.target.value })}
-            />
-          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Publisher">
+              <input
+                className={inputClass}
+                type="text"
+                placeholder="Federation Press"
+                value={fields.publisher}
+                onChange={(e) => update({ publisher: e.target.value })}
+              />
+            </Field>
+            <Field label="Year">
+              <input
+                className={inputClass}
+                type="text"
+                placeholder="2000"
+                value={fields.year}
+                onChange={(e) => update({ year: e.target.value })}
+              />
+            </Field>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Starting page">
+              <input
+                className={inputClass}
+                type="text"
+                placeholder="83"
+                value={fields.startingPage ?? ''}
+                onChange={(e) => update({ startingPage: e.target.value })}
+              />
+            </Field>
+            <Field label="Pinpoint" optional>
+              <input
+                className={inputClass}
+                type="text"
+                placeholder="90"
+                value={fields.pinpoint ?? ''}
+                onChange={(e) => update({ pinpoint: e.target.value })}
+              />
+            </Field>
+          </div>
         </>
       )}
     </div>

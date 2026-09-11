@@ -15,7 +15,7 @@ export async function generateCitation(sourceType: SourceType, fields: CitationF
     const validation = await validateCitation(base, sourceType, fields)
 
     if (validation.isCorrect) {
-      return { ...base, validationStatus: 'validated' }
+      return { ...base, validationStatus: 'validated', confidence: validation.confidence }
     }
 
     const { correctedFootnote, correctedSubsequent, correctedBibliography } = validation
@@ -26,6 +26,7 @@ export async function generateCitation(sourceType: SourceType, fields: CitationF
         subsequent: correctedSubsequent ?? base.subsequent,
         bibliography: correctedBibliography ?? base.bibliography,
         validationStatus: 'corrected',
+        confidence: validation.confidence,
       }
     }
 

@@ -4,8 +4,8 @@ import {
   formatAuthorList,
   formatBibliographyAuthorList,
   formatPinpoint,
+  formatSubsequentAuthorList,
   italicize,
-  lastName,
   quote,
   stripTrailingFullStop,
 } from './utils'
@@ -40,12 +40,20 @@ export function generateWebsiteCitation(fields: WebsiteFields): CitationResult {
     `${bibliographyAuthorPrefix}${quotedTitle} ${websiteItalic} ${parenthetical} ${urlPart}`,
   )
 
-  const surname = authors.length > 0 ? lastName(authors[0]) : ''
-  const subsequentAuthorPrefix = surname ? `${surname}, ` : ''
-  const shortTitle = quote(fields.shortTitle || fields.documentTitle)
+  // AGLC4 r 1.4.1's own default is a BARE 'Author Surname (n X) Pinpoint' (surnames, not the
+  // footnote's own full names) — a title is only added when several works by the same author are
+  // cited, undetectable here since each citation is generated independently; an explicit
+  // shortTitle is treated as the student's own signal that disambiguation is needed. Most web
+  // pages have no author at all (effectiveAuthors() already drops one that just repeats the
+  // website name), in which case the title stands in for the surname entirely, per that same rule.
+  const surnames = formatSubsequentAuthorList(authors)
   const footnoteNumber = fields.footnoteNumber || '1'
   const subsequentPinpoint = fields.pinpoint ? ` ${fields.pinpoint.trim()}` : ''
-  const subsequent = ensureFullStop(`${subsequentAuthorPrefix}${shortTitle} (n ${footnoteNumber})${subsequentPinpoint}`)
+  const subsequent = !surnames
+    ? ensureFullStop(`${quote(fields.shortTitle || fields.documentTitle)} (n ${footnoteNumber})${subsequentPinpoint}`)
+    : ensureFullStop(
+        `${surnames}${fields.shortTitle ? `, ${quote(fields.shortTitle)}` : ''} (n ${footnoteNumber})${subsequentPinpoint}`,
+      )
 
   return {
     footnote,

@@ -57,3 +57,22 @@ export async function fetchWithUserAgentFallback(url: string, init?: RequestInit
 
   return fetchWithUserAgent(url, FALLBACK_USER_AGENT, init)
 }
+
+/**
+ * Recognises a genuine Cloudflare bot-management challenge response — a real network-level block
+ * no User-Agent trick or retry can get past, since it needs a JS-executing browser to solve,
+ * which this app never has. `cf-mitigated: challenge` is Cloudflare's own diagnostic header
+ * stating exactly this happened, and has been the confirmed, consistent signal (via direct
+ * `curl` testing, one domain at a time) behind every Cloudflare-block entry manually added to
+ * `detect.ts`'s `BLOCKED_DATABASES` list so far (SSRN, AustLII, NSW/SA legislation, APO, OHCHR,
+ * Congress.gov, Merriam-Webster, La Trobe — see CLAUDE.md) — reliable enough to trust on its own,
+ * with no need to also inspect the response body. The status+server fallback below exists only
+ * for the rarer case where that header is missing but the response otherwise still looks like a
+ * Cloudflare challenge page (a 403 branded 'cloudflare', which is a weaker but still reasonable
+ * signal — a false positive here just means a slightly-off explanation shown to the student, not
+ * a wrong citation, so the lower precision is an acceptable trade for catching more real blocks).
+ */
+export function isCloudflareChallenge(response: Response): boolean {
+  if (response.headers.get('cf-mitigated') === 'challenge') return true
+  return response.status === 403 && (response.headers.get('server') ?? '').toLowerCase() === 'cloudflare'
+}

@@ -12,6 +12,7 @@ interface CitationOutputProps {
     subsequent: string
     bibliography: string
   }
+  badge?: string
 }
 
 function ValidationStatus({ validating, result }: { validating: boolean; result: CitationResult | null }) {
@@ -24,23 +25,64 @@ function ValidationStatus({ validating, result }: { validating: boolean; result:
     )
   }
 
-  if (result?.validationStatus === 'validated') {
+  if (!result) return null
+
+  if (result.validationStatus === 'validated') {
+    // A 'validated' verdict at medium/low confidence is a weaker claim than the model being sure
+    // — styling it the same as a high-confidence pass would overstate it, so it borrows the
+    // 'corrected' badge's amber treatment (and drops the checkmark) instead of green + tick.
+    const unsure = result.confidence === 'medium' || result.confidence === 'low'
     return (
-      <span className="inline-flex w-fit items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
-        AGLC4 verified ✓
+      <span
+        className={`inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
+          unsure ? 'bg-amber-50 text-amber-700' : 'bg-green-50 text-green-700'
+        }`}
+      >
+        AGLC4 check passed{unsure ? ` · ${result.confidence} confidence` : ' ✓'}
       </span>
     )
   }
 
-  if (result?.validationStatus === 'corrected') {
+  if (result.validationStatus === 'corrected') {
     return (
       <span className="inline-flex w-fit items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
-        Corrected
+        Corrected{result.confidence ? ` · ${result.confidence} confidence` : ''}
       </span>
     )
   }
 
-  return null
+  // 'unvalidated': either the AI check hasn't run yet or it was attempted and failed (missing API
+  // key, network error, rate limit, model refusal — generate.ts falls back to the rules-engine
+  // output silently in that case). Shown explicitly rather than rendering nothing, so "no badge"
+  // is never mistakeable for "checked and fine" — see CLAUDE.md for the reasoning.
+  return (
+    <span className="inline-flex w-fit items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500">
+      Not AGLC4-checked
+    </span>
+  )
+}
+
+// Deterministic, field-level notices (a core AGLC4 element left blank, or a substantive citation-
+// practice reminder — see warnings.ts) — distinct from ValidationStatus above, which is about the
+// *formatted text*'s own AGLC4 correctness per the AI check. Rendered as its own list rather than
+// folded into the badge row: a badge is a one-word pill, these are full sentences a student needs
+// to actually read, so they get the same amber note treatment CitationOutput already uses for a
+// low-confidence validation pass, just full-width instead of pill-shaped.
+function WarningNotes({ warnings }: { warnings: string[] | undefined }) {
+  if (!warnings || warnings.length === 0) return null
+  return (
+    <div className="space-y-2">
+      {warnings.map((warning, index) => (
+        <div
+          key={index}
+          className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800"
+        >
+          <span aria-hidden="true">⚠</span>
+          <span>{warning}</span>
+        </div>
+      ))}
+    </div>
+  )
 }
 
 interface PanelProps {
@@ -86,10 +128,18 @@ function Panel({ label, rule, text }: PanelProps) {
   )
 }
 
-export default function CitationOutput({ result, validating, rules }: CitationOutputProps) {
+export default function CitationOutput({ result, validating, rules, badge }: CitationOutputProps) {
   return (
     <div className="space-y-4">
-      <ValidationStatus validating={validating} result={result} />
+      <div className="flex flex-wrap items-center gap-2">
+        <ValidationStatus validating={validating} result={result} />
+        {badge && (
+          <span className="inline-flex w-fit items-center gap-1 rounded-full bg-primary-tint px-2.5 py-1 text-xs font-medium text-primary">
+            {badge}
+          </span>
+        )}
+      </div>
+      <WarningNotes warnings={result?.warnings} />
       <Panel label="Footnote citation" rule={rules.footnote} text={result?.footnote ?? ''} />
       <Panel label="Subsequent reference" rule={rules.subsequent} text={result?.subsequent ?? ''} />
       <Panel label="Bibliography entry" rule={rules.bibliography} text={result?.bibliography ?? ''} />

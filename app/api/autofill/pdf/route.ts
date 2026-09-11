@@ -5,10 +5,14 @@ import { AutofillResult } from '@/lib/autofill/types'
 // Matches the other AI-extraction routes' generous headroom — a plain metadata+snippet call is
 // usually fast, but AI response latency varies enough that 20s occasionally wasn't enough.
 const REQUEST_TIMEOUT_MS = 28_000
+
+// See app/api/autofill/route.ts — stops the platform cutting the function off before the internal
+// Promise.race cap (28s) can return its graceful timeoutResult().
+export const maxDuration = 45
 // Second, server-side enforcement of the same cap the client already applies — never trust the
 // client alone for a limit that exists to bound what gets sent to the AI provider.
 const MAX_RAW_TEXT_LENGTH = 2000
-const METADATA_KEYS = ['title', 'author', 'subject', 'keywords', 'creator', 'producer', 'rawText'] as const
+const METADATA_KEYS = ['title', 'author', 'subject', 'keywords', 'creator', 'producer', 'rawText', 'filename'] as const
 
 function timeoutResult(): AutofillResult {
   return {

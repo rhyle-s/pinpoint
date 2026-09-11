@@ -10,7 +10,10 @@ const SOURCE_TYPES: { type: SourceType; label: string }[] = [
   { type: 'report', label: 'Report' },
   { type: 'researchPaper', label: 'Conference/Research Paper/Thesis' },
   { type: 'website', label: 'Website' },
-  { type: 'treaty', label: 'Treaty' },
+  { type: 'newspaper', label: 'Newspaper' },
+  { type: 'otherLegislativeMaterial', label: 'Other Legislative Material' },
+  { type: 'internationalMaterial', label: 'International Material' },
+  { type: 'otherSources', label: 'Other Sources' },
 ]
 
 interface SourceTypeSelectorProps {
@@ -18,27 +21,24 @@ interface SourceTypeSelectorProps {
   onSelect: (type: SourceType) => void
 }
 
+// A single dropdown rather than 11 wrapped buttons — same selection contract (selected/onSelect),
+// same list, just a lot less vertical space: the button row used to wrap to two lines above the
+// form on every screen size, here it's one control the same height as any other field.
 export default function SourceTypeSelector({ selected, onSelect }: SourceTypeSelectorProps) {
   return (
-    <div className="flex flex-wrap gap-2">
-      {SOURCE_TYPES.map((source) => {
-        const isSelected = source.type === selected
-
-        return (
-          <button
-            key={source.type}
-            type="button"
-            onClick={() => onSelect(source.type)}
-            className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
-              isSelected
-                ? 'border-primary bg-primary-tint text-primary'
-                : 'border-gray-200 text-gray-700 hover:border-gray-300'
-            }`}
-          >
+    <label className="block">
+      <span className="mb-1 block text-sm font-medium text-gray-700">Source type</span>
+      <select
+        value={selected}
+        onChange={(e) => onSelect(e.target.value as SourceType)}
+        className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+      >
+        {SOURCE_TYPES.map((source) => (
+          <option key={source.type} value={source.type}>
             {source.label}
-          </button>
-        )
-      })}
-    </div>
+          </option>
+        ))}
+      </select>
+    </label>
   )
 }

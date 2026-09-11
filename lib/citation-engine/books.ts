@@ -3,9 +3,9 @@ import {
   ensureFullStop,
   formatAuthorList,
   formatBibliographyAuthorList,
+  formatSubsequentAuthorList,
   italicize,
   joinParts,
-  lastName,
   quote,
   stripTrailingFullStop,
 } from './utils'
@@ -18,14 +18,25 @@ function formatWholeBook(fields: BookFields): { footnote: string; bibliography: 
   const titleItalic = italicize(fields.title)
   const publication = `(${joinParts([fields.publisher, fields.edition, fields.year], ', ')})`
   const pinpoint = fields.pinpoint ? ` ${fields.pinpoint.trim()}` : ''
-
-  const shortTitle = italicize(fields.shortTitle || fields.title)
   const footnoteNumber = fields.footnoteNumber || '1'
+
+  // AGLC4 r 1.4.1's own default for a secondary source is a BARE 'Author Surname (n X) Pinpoint'
+  // (surnames only, not the full names the footnote itself uses — confirmed by '5 Edelman and Bant
+  // (n 2) 260.') — a title is only added when several works by the same author are cited, which
+  // this app has no way to detect (each citation is generated independently); the student's own
+  // explicit shortTitle is treated as the signal they already know they need to disambiguate.
+  // Where there's no author at all, the title stands in for the author's surname entirely.
+  const surnames = formatSubsequentAuthorList(fields.authors ?? [])
+  const subsequent = !surnames
+    ? ensureFullStop(`${italicize(fields.shortTitle || fields.title)} (n ${footnoteNumber})${pinpoint}`)
+    : ensureFullStop(
+        `${surnames}${fields.shortTitle ? `, ${italicize(fields.shortTitle)}` : ''} (n ${footnoteNumber})${pinpoint}`,
+      )
 
   return {
     footnote: ensureFullStop(`${authorPrefix}${titleItalic} ${publication}${pinpoint}`),
     bibliography: stripTrailingFullStop(`${bibliographyAuthorPrefix}${titleItalic} ${publication}`),
-    subsequent: ensureFullStop(`${authorPrefix}${shortTitle} (n ${footnoteNumber})${pinpoint}`),
+    subsequent,
   }
 }
 
@@ -46,11 +57,14 @@ function formatBookChapter(fields: BookFields): { footnote: string; bibliography
     `${bibliographyChapterAuthors}, ${chapterTitle} ${core} ${startingPage}`,
   )
 
-  const surname = lastName(fields.chapterAuthors?.[0] ?? '')
-  const shortTitle = quote(fields.shortTitle || fields.chapterTitle || '')
+  const surnames = formatSubsequentAuthorList(fields.chapterAuthors ?? [])
   const footnoteNumber = fields.footnoteNumber || '1'
   const pinpoint = fields.pinpoint ? ` ${fields.pinpoint.trim()}` : ''
-  const subsequent = ensureFullStop(`${surname}, ${shortTitle} (n ${footnoteNumber})${pinpoint}`)
+  const subsequent = !surnames
+    ? ensureFullStop(`${quote(fields.shortTitle || fields.chapterTitle || '')} (n ${footnoteNumber})${pinpoint}`)
+    : ensureFullStop(
+        `${surnames}${fields.shortTitle ? `, ${quote(fields.shortTitle)}` : ''} (n ${footnoteNumber})${pinpoint}`,
+      )
 
   return { footnote, bibliography, subsequent }
 }

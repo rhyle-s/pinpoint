@@ -62,7 +62,8 @@ describe('generateResearchPaperCitation', () => {
     expect(result.bibliography).toBe('‘A Paper With No Named Author’ (Research Paper, Grattan Institute, 2020)')
   })
 
-  it('subsequent reference uses the first author’s surname only, and keeps its full stop', () => {
+  it('subsequent reference uses every author\'s surname (not just the first), joined the same way the footnote itself is, with no title (AGLC4 r 1.4.1\'s own default)', () => {
+    // Matches AGLC4's own r 1.4.1 worked example exactly in shape: '5 Edelman and Bant (n 2) 260.'
     const fields: ResearchPaperFields = {
       authors: ['Ian Ramsay', 'Cameron Sim'],
       title: 'The Role and Use of Debt Agreements',
@@ -72,6 +73,20 @@ describe('generateResearchPaperCitation', () => {
       footnoteNumber: '4',
     }
     const result = generateResearchPaperCitation(fields)
-    expect(result.subsequent).toBe('Ramsay, ‘The Role and Use of Debt Agreements’ (n 4).')
+    expect(result.subsequent).toBe('Ramsay and Sim (n 4).')
+  })
+
+  it('subsequent reference includes the title when the student has explicitly set a short title', () => {
+    const fields: ResearchPaperFields = {
+      authors: ['Ian Ramsay', 'Cameron Sim'],
+      title: 'The Role and Use of Debt Agreements',
+      documentType: 'Research Paper',
+      institution: 'University of Melbourne',
+      date: '2011',
+      footnoteNumber: '4',
+      shortTitle: 'The Role and Use of Debt Agreements',
+    }
+    const result = generateResearchPaperCitation(fields)
+    expect(result.subsequent).toBe('Ramsay and Sim, ‘The Role and Use of Debt Agreements’ (n 4).')
   })
 })

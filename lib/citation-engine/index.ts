@@ -5,18 +5,25 @@ import { generateBookCitation } from './books'
 import { generateReportCitation } from './reports'
 import { generateResearchPaperCitation } from './research-papers'
 import { generateWebsiteCitation } from './websites'
-import { generateTreatyCitation } from './treaties'
+import { generateNewspaperCitation } from './newspapers'
+import { generateOtherLegislativeMaterialCitation } from './other-legislative-material'
+import { generateInternationalMaterialCitation } from './international-material'
+import { generateOtherSourcesCitation } from './other-sources'
+import { getConferencePaperDateWarning, getMissingFieldsWarning, getUnreportedCaseWarning } from './warnings'
 import {
   BookFields,
   CaseFields,
   CitationFields,
   CitationResult,
+  InternationalMaterialFields,
   JournalFields,
   LegislationFields,
+  NewspaperFields,
+  OtherLegislativeMaterialFields,
+  OtherSourcesFields,
   ReportFields,
   ResearchPaperFields,
   SourceType,
-  TreatyFields,
   WebsiteFields,
 } from './types'
 
@@ -25,26 +32,46 @@ import {
  * safe to call from client components for instant preview.
  */
 export function generateCitationSync(sourceType: SourceType, fields: CitationFields): CitationResult {
-  switch (sourceType) {
-    case 'case':
-      return generateCaseCitation(fields as CaseFields)
-    case 'legislation':
-      return generateLegislationCitation(fields as LegislationFields)
-    case 'journal':
-      return generateJournalCitation(fields as JournalFields)
-    case 'book':
-      return generateBookCitation(fields as BookFields)
-    case 'report':
-      return generateReportCitation(fields as ReportFields)
-    case 'researchPaper':
-      return generateResearchPaperCitation(fields as ResearchPaperFields)
-    case 'website':
-      return generateWebsiteCitation(fields as WebsiteFields)
-    case 'treaty':
-      return generateTreatyCitation(fields as TreatyFields)
-    default:
-      throw new Error(`Citation generation for source type "${sourceType}" is not yet supported.`)
-  }
+  const result = (() => {
+    switch (sourceType) {
+      case 'case':
+        return generateCaseCitation(fields as CaseFields)
+      case 'legislation':
+        return generateLegislationCitation(fields as LegislationFields)
+      case 'journal':
+        return generateJournalCitation(fields as JournalFields)
+      case 'book':
+        return generateBookCitation(fields as BookFields)
+      case 'report':
+        return generateReportCitation(fields as ReportFields)
+      case 'researchPaper':
+        return generateResearchPaperCitation(fields as ResearchPaperFields)
+      case 'website':
+        return generateWebsiteCitation(fields as WebsiteFields)
+      case 'newspaper':
+        return generateNewspaperCitation(fields as NewspaperFields)
+      case 'otherLegislativeMaterial':
+        return generateOtherLegislativeMaterialCitation(fields as OtherLegislativeMaterialFields)
+      case 'internationalMaterial':
+        return generateInternationalMaterialCitation(fields as InternationalMaterialFields)
+      case 'otherSources':
+        return generateOtherSourcesCitation(fields as OtherSourcesFields)
+      default:
+        throw new Error(`Citation generation for source type "${sourceType}" is not yet supported.`)
+    }
+  })()
+
+  // Deterministic, field-level warnings — computed once here rather than inside each of the 11
+  // formatter files above, since neither check needs anything formatter-specific (they look at
+  // `fields` directly, not the formatted text), and centralising them means a new warning only
+  // ever needs adding in one place.
+  const warnings = [
+    getMissingFieldsWarning(sourceType, fields),
+    getUnreportedCaseWarning(sourceType, fields),
+    getConferencePaperDateWarning(sourceType, fields),
+  ].filter((w): w is string => w !== undefined)
+
+  return warnings.length > 0 ? { ...result, warnings } : result
 }
 
 // Quote-wrapping in the engine files already inserts the outer curly quotes directly, but a

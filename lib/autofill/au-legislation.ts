@@ -1,6 +1,6 @@
 import 'server-only'
 import * as cheerio from 'cheerio'
-import { LegislationFields, LegislationPinpointType } from '../citation-engine/types'
+import { LegislationFields, LegislationPinpointType, OtherLegislativeMaterialFields } from '../citation-engine/types'
 import { aiExtractFromUrl } from './ai-extract'
 import { fetchWithUserAgentFallback } from './fetch'
 import { AutofillResult } from './types'
@@ -56,6 +56,18 @@ function detectJurisdiction(url: string): LegislationFields['jurisdiction'] | un
   const lower = url.toLowerCase()
   const domain = Object.keys(AU_LEGISLATION_DOMAINS).find((d) => lower.includes(d))
   return domain ? AU_LEGISLATION_DOMAINS[domain] : undefined
+}
+
+// These state/territory sites also host Bills (not yet Acts) and their explanatory material under
+// the same domain — the URL path itself says so, eg Queensland's own convention distinguishes
+// '/view/pdf/bill.first/...' (the Bill) from '/view/pdf/bill.first.exp/...' (its Explanatory
+// Notes), confirmed by direct testing. Caught before the ordinary-legislation path below so a
+// Bill isn't forced into the 'legislation' hint (r 3.1 format, italicised) when AGLC4 r 3.2 (never
+// italicised) is what actually applies.
+function detectBillSubtype(url: string): 'bill' | 'explanatoryMaterial' | undefined {
+  const lower = url.toLowerCase()
+  if (!lower.includes('bill')) return undefined
+  return lower.includes('exp') || lower.includes('explanatory') ? 'explanatoryMaterial' : 'bill'
 }
 
 function detectBlockedDomain(url: string): string | undefined {
@@ -117,8 +129,71 @@ function blockedFallback(
   }
 }
 
+function billJurisdictionOf(jurisdiction: LegislationFields['jurisdiction'] | undefined): OtherLegislativeMaterialFields['billJurisdiction'] {
+  return jurisdiction && jurisdiction !== 'none' ? jurisdiction : undefined
+}
+
+function bareOtherLegislativeMaterialFallback(
+  subtype: 'bill' | 'explanatoryMaterial',
+  jurisdiction: LegislationFields['jurisdiction'] | undefined,
+  message: string,
+): AutofillResult {
+  const billJurisdiction = billJurisdictionOf(jurisdiction)
+  return {
+    detectedSourceType: 'otherLegislativeMaterial',
+    fields: { subtype, ...(billJurisdiction ? { billJurisdiction } : {}) },
+    confidence: 'low',
+    message,
+  }
+}
+
+async function handleBillUrl(
+  url: string,
+  subtype: 'bill' | 'explanatoryMaterial',
+  jurisdiction: LegislationFields['jurisdiction'] | undefined,
+): Promise<AutofillResult> {
+  const billJurisdiction = billJurisdictionOf(jurisdiction)
+
+  if (detectBlockedDomain(url)) {
+    return bareOtherLegislativeMaterialFallback(
+      subtype,
+      jurisdiction,
+      `This site blocks automated requests${billJurisdiction ? ` — the jurisdiction (${billJurisdiction}) has been filled in, but` : ' —'} please add the rest manually. ${TRY_ALTERNATIVE_INPUT_SUGGESTION}`,
+    )
+  }
+
+  const result = await aiExtractFromUrl(url, 'otherLegislativeMaterial')
+
+  // As with the ordinary-legislation path below, aiExtractFromUrl always honours the hint on
+  // success — a different sourceType here means its own generic failure fallback fired instead.
+  if (result.detectedSourceType !== 'otherLegislativeMaterial') {
+    return bareOtherLegislativeMaterialFallback(
+      subtype,
+      jurisdiction,
+      `Could not extract details — please fill fields manually. ${TRY_ALTERNATIVE_INPUT_SUGGESTION}`,
+    )
+  }
+
+  return {
+    ...result,
+    fields: {
+      ...result.fields,
+      subtype,
+      ...(billJurisdiction ? { billJurisdiction } : {}),
+    },
+  }
+}
+
 export async function handleAuLegislation(url: string): Promise<AutofillResult> {
   const jurisdiction = detectJurisdiction(url)
+  const billSubtype = detectBillSubtype(url)
+
+  // A reliable URL-level signal (eg Queensland's descriptive '/bill.first[.exp]/' paths) skips
+  // straight to the confident, hinted path below rather than waiting on content classification.
+  if (billSubtype) {
+    return handleBillUrl(url, billSubtype, jurisdiction)
+  }
+
   const pinpoint = extractPinpointFromUrl(url, jurisdiction)
 
   if (detectBlockedDomain(url)) {
@@ -126,12 +201,28 @@ export async function handleAuLegislation(url: string): Promise<AutofillResult> 
   }
 
   const contentUrl = jurisdiction === 'Vic' ? await resolveVicPdfUrl(url) : url
-  const result = await aiExtractFromUrl(contentUrl, 'legislation')
 
-  // aiExtractFromUrl always honours the 'legislation' hint on success — the only way to get a
-  // different sourceType back here is its own generic failure fallback (fetch error, AI
-  // refusal, etc), which we replace with a legislation-shaped one so jurisdiction and pinpoint
-  // still make it through even when the page content didn't.
+  // Deliberately no sourceType hint here. These domains host Bills and Explanatory Memoranda
+  // alongside ordinary Acts, and not every jurisdiction's URL gives a reliable signal the way
+  // Queensland's descriptive paths do — confirmed on a real Victorian Explanatory Memorandum
+  // served from an opaque content-hash filename with no 'bill' (or anything else informative) in
+  // the URL at all. Forcing 'legislation' there would have italicised a Bill's title (wrong per r
+  // 3.2) and missed that the document is actually an Explanatory Memorandum entirely. The model
+  // has proven reliable at telling these apart from content alone (confirmed across multiple real
+  // Bill/Act/Explanatory-Memorandum documents), so it's trusted here instead.
+  const result = await aiExtractFromUrl(contentUrl)
+
+  if (result.detectedSourceType === 'otherLegislativeMaterial') {
+    const billJurisdiction = billJurisdictionOf(jurisdiction)
+    return {
+      ...result,
+      fields: {
+        ...result.fields,
+        ...(billJurisdiction ? { billJurisdiction } : {}),
+      },
+    }
+  }
+
   if (result.detectedSourceType !== 'legislation') {
     return blockedFallback(jurisdiction, pinpoint)
   }
