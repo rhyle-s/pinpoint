@@ -1,6 +1,10 @@
 # Pinpoint — Brand & Design System Specification
 **Version 1.0 · September 2026**
 
+> **Superseded.** `pinpoint-brand-spec-v2.md` (LOCKED) is now the source of truth — white nav →
+> blue nav, the two-tone logo → the single-ink "Precision Mark" `pinpoint.` wordmark, and several
+> component-level values changed. Kept here for history; do not implement from this file.
+
 ---
 
 ## 1. Brand Identity

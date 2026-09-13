@@ -11,43 +11,64 @@ const TABS = [
   { label: 'Guide', href: '/guide', active: true },
 ]
 
+// Brand & Design System v2.0 (LOCKED): blue nav (#2563EB) + white wordmark — see
+// pinpoint-brand-spec-v2.md §5. Height is fixed at 56px per spec rather than left to padding, so
+// it stays exact regardless of font metrics.
 export default function NavBar() {
   const pathname = usePathname()
 
   return (
-    <header className="border-b border-gray-200 bg-white" style={{ borderBottomWidth: '0.5px' }}>
-      <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-        <Link href="/generate">
-          <Logo size="lg" />
+    <header style={{ height: 56 }} className="bg-primary">
+      <nav className="mx-auto flex h-full max-w-[1100px] items-center justify-between px-4 sm:px-7">
+        <Link href="/generate" className="shrink-0">
+          <Logo variant="white" size="md" />
         </Link>
 
-        <ul className="flex items-center gap-6">
-          {TABS.map((tab) => {
-            if (!tab.active) {
+        <div className="flex items-center gap-3 sm:gap-6">
+          <ul className="flex items-center gap-3 sm:gap-6">
+            {TABS.map((tab) => {
+              if (!tab.active) {
+                // Not yet built, and not worth the space on a narrow viewport — kept for desktop
+                // only; Generate/Guide (the two real, working tabs) always stay visible.
+                return (
+                  <li key={tab.label} className="hidden sm:block">
+                    <span
+                      title="Coming soon"
+                      className="pointer-events-none cursor-default text-[13px] font-medium text-white/40"
+                    >
+                      {tab.label}
+                    </span>
+                  </li>
+                )
+              }
+
+              const isCurrent = pathname === tab.href || pathname?.startsWith(`${tab.href}/`)
+
               return (
-                <li key={tab.label} className="group relative">
-                  <span className="cursor-not-allowed text-sm font-medium text-gray-400">{tab.label}</span>
-                  <span className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
-                    Coming soon
-                  </span>
+                <li key={tab.label}>
+                  <Link
+                    href={tab.href}
+                    className={`whitespace-nowrap text-[13px] ${
+                      isCurrent ? 'font-bold text-white' : 'font-medium text-white/75 hover:text-white'
+                    }`}
+                  >
+                    {tab.label}
+                  </Link>
                 </li>
               )
-            }
+            })}
+          </ul>
 
-            const isCurrent = pathname === tab.href || pathname?.startsWith(`${tab.href}/`)
-
-            return (
-              <li key={tab.label}>
-                <Link
-                  href={tab.href}
-                  className={`text-sm font-medium ${isCurrent ? 'text-primary' : 'text-gray-700 hover:text-primary'}`}
-                >
-                  {tab.label}
-                </Link>
-              </li>
-            )
-          })}
-        </ul>
+          {/* No dedicated signup/landing flow exists in the app yet — points at the tool itself,
+              the closest thing to a "get started" destination today. Redirect this once there's a
+              real target (a marketing page, a saved-citations library sign-up, etc). */}
+          <Link
+            href="/generate"
+            className="hidden shrink-0 whitespace-nowrap rounded-md bg-white/15 px-4 py-[7px] text-[13px] font-semibold text-white transition-colors hover:bg-white/25 sm:inline-block"
+          >
+            Get started
+          </Link>
+        </div>
       </nav>
     </header>
   )

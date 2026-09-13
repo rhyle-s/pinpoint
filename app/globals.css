@@ -2,33 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #fafaf9;
-  --foreground: #1c1c1a;
-}
+@layer base {
+  body {
+    background-color: #fafaf9;
+    color: #1c1c1a;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+  * {
+    border-color: #e8e8e6;
+  }
 
-/* Citation output text — Crimson Pro serif per the brand spec, applied via the `font-citation`
-   Tailwind class in CitationOutput.tsx; this plain class exists for anywhere else that needs the
-   same treatment without pulling in the rest of Tailwind's text-base defaults. */
-.citation-text {
-  font-family: var(--font-citation), Georgia, serif;
-  font-size: 15px;
-  line-height: 1.8;
-  color: #1a1a18;
-}
+  /* Citation output text — Crimson Pro serif, per the brand spec's citation-output typography.
+     Applied via this class (CitationOutput.tsx) or the equivalent `font-citation` Tailwind
+     utility anywhere that needs the same treatment without pulling in Tailwind's text-base
+     defaults. */
+  .citation-text {
+    font-family: var(--font-citation), Georgia, serif;
+    font-size: 15px;
+    line-height: 1.8;
+    color: #1c1c1a;
+  }
 
-/* Uppercase section labels (rule references, panel captions). */
-.label-caps {
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: #aeada9;
+  /* Uppercase field labels / rule references / panel captions. */
+  .label-caps {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    color: #aeada9;
+  }
 }

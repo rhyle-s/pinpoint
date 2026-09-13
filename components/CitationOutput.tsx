@@ -30,12 +30,13 @@ function ValidationStatus({ validating, result }: { validating: boolean; result:
   if (result.validationStatus === 'validated') {
     // A 'validated' verdict at medium/low confidence is a weaker claim than the model being sure
     // — styling it the same as a high-confidence pass would overstate it, so it borrows the
-    // 'corrected' badge's amber treatment (and drops the checkmark) instead of green + tick.
+    // 'corrected' badge's amber treatment (and drops the checkmark) instead of the brand-blue
+    // "verified" badge below.
     const unsure = result.confidence === 'medium' || result.confidence === 'low'
     return (
       <span
-        className={`inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
-          unsure ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-600'
+        className={`inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold ${
+          unsure ? 'bg-amber-50 text-amber-700' : 'bg-primary-tint text-primary'
         }`}
       >
         AGLC4 check passed{unsure ? ` · ${result.confidence} confidence` : ' ✓'}
@@ -101,11 +102,11 @@ function Panel({ label, rule, text }: PanelProps) {
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 p-5">
-      <div className="mb-3 flex items-center justify-between">
+    <div className="rounded-lg border border-gray-200 bg-white px-5 py-4">
+      <div className="mb-2.5 flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-medium text-gray-900">{label}</h3>
-          <p className="text-xs text-gray-400">{rule}</p>
+          <h3 className="label-caps">{label}</h3>
+          <p className="mt-1 text-[10px] text-gray-400">{rule}</p>
         </div>
         <button
           type="button"
@@ -124,7 +125,7 @@ function Panel({ label, rule, text }: PanelProps) {
           distinct from the app's own UI sans-serif everywhere else. formatItalics already renders
           case names/legislation/journal names etc as <em>, never bold. */}
       <p
-        className="min-h-[1.5rem] font-citation text-[15px] leading-[1.8] text-gray-900"
+        className="citation-text min-h-[1.5rem]"
         dangerouslySetInnerHTML={{ __html: text ? formatItalics(text, 'html') : '—' }}
       />
     </div>
