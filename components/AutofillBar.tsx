@@ -272,7 +272,7 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
   const canClear = !isLoading && (hasAnyInput || status !== 'idle')
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4">
+    <div className="rounded-xl border border-gray-200 p-4">
       <div className="mb-3 flex items-center justify-between">
         <span className="text-sm font-medium text-gray-700">Fill in details automatically</span>
         <button
@@ -289,10 +289,8 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
           fixed to the same 88px so the two input bars line up), PDF gets its own square drop
           target on the right sized to match that column's height exactly — see the 84px note on
           the button below for why that's a hardcoded pixel value rather than an aspect-ratio
-          utility. Below `sm`, the PDF square drops beneath the column instead of squeezing beside
-          it — at 375px there isn't room for a 144px-wide square plus a usable input, confirmed
-          live (inputs were reduced to single-digit character width without this). */}
-      <div className="flex flex-col items-stretch gap-2 sm:flex-row">
+          utility. */}
+      <div className="flex items-stretch gap-2">
         <div className="flex flex-1 flex-col gap-2">
           <div className="flex gap-2">
             <input
@@ -303,13 +301,13 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
               onKeyDown={handleKeyDown}
               placeholder="Paste a URL or DOI…"
               disabled={isLoading}
-              className="w-full rounded-md border border-transparent bg-gray-100 px-3 py-2 text-[13px] text-gray-900 placeholder:text-gray-400 focus:border-brand-600 focus:outline-none focus:shadow-ring-brand disabled:opacity-60"
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-gray-50"
             />
             <button
               type="button"
               onClick={() => runAutofill(value)}
               disabled={isLoading || !value.trim()}
-              className="w-[88px] shrink-0 whitespace-nowrap rounded-md bg-primary px-2 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-40"
+              className="w-[88px] shrink-0 whitespace-nowrap rounded-lg bg-primary px-2 py-2 text-sm font-medium text-white transition-colors hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -338,13 +336,13 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
               }
               rows={4}
               disabled={isLoading}
-              className="w-full resize-none rounded-md border border-transparent bg-gray-100 px-3 py-2 text-[13px] text-gray-900 placeholder:text-gray-400 focus:border-brand-600 focus:outline-none focus:shadow-ring-brand disabled:opacity-60"
+              className="w-full resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-gray-50"
             />
             <button
               type="button"
               onClick={() => runPasteText(pasteText)}
               disabled={isLoading || !pasteText.trim()}
-              className="flex w-[88px] shrink-0 items-center justify-center whitespace-nowrap rounded-md bg-brand-700 px-2 text-sm font-semibold text-white transition-colors hover:bg-[#1E40AF] disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex w-[88px] shrink-0 items-center justify-center whitespace-nowrap rounded-lg bg-primary px-2 text-sm font-medium text-white transition-colors hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-50"
             >
               Extract
             </button>
@@ -376,7 +374,8 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
           disabled={isLoading}
           aria-label="Upload a PDF"
           title="Upload or drop a PDF — it's read in your browser and never uploaded to our servers"
-          className={`flex h-16 w-full shrink-0 flex-row items-center justify-center gap-2 rounded-md text-center text-xs font-medium leading-tight text-white transition-colors disabled:cursor-not-allowed disabled:opacity-40 sm:h-[144px] sm:w-[144px] sm:flex-col sm:gap-1 ${
+          style={{ width: 144, height: 144 }}
+          className={`flex shrink-0 flex-col items-center justify-center gap-1 rounded-lg text-center text-xs font-medium leading-tight text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
             isDraggingFile ? 'bg-[#1D4ED8]' : 'bg-primary hover:bg-[#1D4ED8]'
           }`}
         >
@@ -389,10 +388,10 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
         </button>
       </div>
 
-      <p className="mt-2 flex items-start gap-1.5 text-[11px] font-medium text-warning-600">
+      <p className="mt-2 flex items-start gap-1.5 text-xs font-medium text-amber-700">
         <svg
-          width="13"
-          height="13"
+          width="14"
+          height="14"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -419,7 +418,7 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
       )}
 
       {!isLoading && status === 'error' && (
-        <p className="mt-2 text-xs font-medium text-error-600">{feedbackText}</p>
+        <p className="mt-2 text-xs font-medium text-amber-700">{feedbackText}</p>
       )}
     </div>
   )

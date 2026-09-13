@@ -21,32 +21,24 @@ interface SourceTypeSelectorProps {
   onSelect: (type: SourceType) => void
 }
 
-// Brand & Design System v2.0 (LOCKED) §6 "Source type pills" — a wrapped row of pill buttons,
-// same selected/onSelect contract as before. This reverts an earlier change to a single <select>
-// (made purely to save the vertical space 11 wrapped buttons cost); the spec explicitly wants the
-// pill treatment back, with flex-wrap already accounted for.
+// A single dropdown rather than 11 wrapped buttons — same selection contract (selected/onSelect),
+// same list, just a lot less vertical space: the button row used to wrap to two lines above the
+// form on every screen size, here it's one control the same height as any other field.
 export default function SourceTypeSelector({ selected, onSelect }: SourceTypeSelectorProps) {
   return (
-    <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Source type">
-      {SOURCE_TYPES.map((source) => {
-        const isActive = source.type === selected
-        return (
-          <button
-            key={source.type}
-            type="button"
-            role="radio"
-            aria-checked={isActive}
-            onClick={() => onSelect(source.type)}
-            className={`rounded-md border px-3.5 py-[7px] text-[13px] transition-colors ${
-              isActive
-                ? 'border-brand-600 bg-primary-tint font-semibold text-primary'
-                : 'border-gray-200 bg-white font-medium text-gray-600 hover:bg-gray-100'
-            }`}
-          >
+    <label className="block">
+      <span className="mb-1 block text-sm font-medium text-gray-700">Source type</span>
+      <select
+        value={selected}
+        onChange={(e) => onSelect(e.target.value as SourceType)}
+        className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+      >
+        {SOURCE_TYPES.map((source) => (
+          <option key={source.type} value={source.type}>
             {source.label}
-          </button>
-        )
-      })}
-    </div>
+          </option>
+        ))}
+      </select>
+    </label>
   )
 }

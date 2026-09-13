@@ -689,8 +689,8 @@ export default function Generator({ initialSourceType }: GeneratorProps) {
 
       <SourceTypeSelector selected={selectedSourceType} onSelect={handleSourceTypeSelect} />
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div className="rounded-lg border border-gray-200 bg-white p-5">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+        <div className="rounded-xl border border-gray-200 p-6">
           {selectedSourceType === 'case' && (
             <CaseForm
               fields={caseFields}

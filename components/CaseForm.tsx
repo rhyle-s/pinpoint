@@ -16,9 +16,9 @@ const REPORT_TYPES: { value: CaseReportType; label: string }[] = [
 function Field({ label, optional, children }: { label: string; optional?: boolean; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1.5 flex items-center justify-between">
-        <span className="label-caps">{label}</span>
-        {optional && <span className="text-[10px] font-normal normal-case tracking-normal text-gray-400">(optional)</span>}
+      <span className="mb-1 block text-sm font-medium text-gray-700">
+        {label}
+        {optional && <span className="ml-1 text-gray-400">(optional)</span>}
       </span>
       {children}
     </label>
@@ -26,7 +26,7 @@ function Field({ label, optional, children }: { label: string; optional?: boolea
 }
 
 const inputClass =
-  'w-full rounded-md border border-gray-200 bg-gray-100 px-3 py-[9px] text-[13px] text-gray-900 placeholder:text-gray-400 focus:border-brand-600 focus:outline-none focus:shadow-ring-brand'
+  'w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary'
 
 export default function CaseForm({ fields, onChange }: CaseFormProps) {
   function update(patch: Partial<CaseFields>) {
