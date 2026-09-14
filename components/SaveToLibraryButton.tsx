@@ -73,7 +73,7 @@ export default function SaveToLibraryButton({ sourceType, fields, result }: Save
   if (userId === null) {
     return (
       <div className="flex items-center gap-2 rounded-lg bg-primary-tint px-4 py-2.5 text-sm text-gray-700">
-        <span>Want to build an AGLC4 reference library?</span>
+        <span>Save this citation and build an AGLC4 reference library.</span>
         <Link href="/auth/login" className="font-semibold text-primary hover:text-[#1D4ED8]">
           Sign in →
         </Link>
