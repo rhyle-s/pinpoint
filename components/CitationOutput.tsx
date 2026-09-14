@@ -94,14 +94,43 @@ interface PanelProps {
 function Panel({ label, rule, text }: PanelProps) {
   const [copied, setCopied] = useState(false)
 
-  function handleCopy() {
-    navigator.clipboard.writeText(formatItalics(text, 'plain'))
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1500)
+  // Writes both a plain-text and an HTML flavour, so italics (case names, journal titles etc)
+  // survive a paste into Word/Docs instead of coming through as flat text with literal asterisks
+  // stripped. Falls back to plain text on browsers without the rich Clipboard API, or if the rich
+  // write is rejected (eg no clipboard-write permission) — and that fallback is caught too, since
+  // a denial there is a real possibility, not just the rich path's.
+  async function handleCopy() {
+    const plain = formatItalics(text, 'plain')
+    let succeeded = true
+
+    try {
+      if (typeof ClipboardItem !== 'undefined' && navigator.clipboard.write) {
+        const html = formatItalics(text, 'html')
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            'text/plain': new Blob([plain], { type: 'text/plain' }),
+            'text/html': new Blob([html], { type: 'text/html' }),
+          }),
+        ])
+      } else {
+        await navigator.clipboard.writeText(plain)
+      }
+    } catch {
+      try {
+        await navigator.clipboard.writeText(plain)
+      } catch {
+        succeeded = false
+      }
+    }
+
+    if (succeeded) {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    }
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 p-5">
+    <div className="rounded-xl border border-gray-200 bg-gray-100 p-5">
       <div className="mb-3 flex items-center justify-between">
         <div>
           <h3 className="text-base font-medium text-gray-900">{label}</h3>

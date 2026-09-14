@@ -26,7 +26,7 @@ export default function NavBar() {
             if (!tab.active) {
               return (
                 <li key={tab.label} className="group relative">
-                  <span className="cursor-not-allowed text-sm font-medium text-white/40">{tab.label}</span>
+                  <span className="cursor-not-allowed text-base font-medium text-white/40">{tab.label}</span>
                   <span className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
                     Coming soon
                   </span>
@@ -40,7 +40,7 @@ export default function NavBar() {
               <li key={tab.label}>
                 <Link
                   href={tab.href}
-                  className={`text-sm font-medium ${isCurrent ? 'text-white' : 'text-white/75 hover:text-white'}`}
+                  className={`text-base font-medium ${isCurrent ? 'text-white' : 'text-white/75 hover:text-white'}`}
                 >
                   {tab.label}
                 </Link>
