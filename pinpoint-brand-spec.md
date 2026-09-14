@@ -1,5 +1,7 @@
 # Pinpoint — Brand & Design System Specification
-**Version 1.0 · September 2026**
+**Version 1.1 · September 2026**
+
+*Updated to match the live app after a round of iterative visual feedback (nav colour/logo size, input field treatment, heading-copy sizing, citation-panel styling, citation font) — see `CLAUDE.md`'s "Post-hybrid iteration" note for the change-by-change reasoning. Sections below describe what's actually implemented, not the original v1.0 proposal where the two have since diverged.*
 
 ---
 
@@ -8,8 +10,9 @@
 ### Logo — "Precision Mark"
 Chosen from an 8-direction exploration (v1.0 shipped the two-tone `pin`/`point` split below; superseded here). One ink colour throughout — the two-tone split is dropped — with a small blue full stop standing in for "pin" and for the name's own meaning.
 - **Wordmark:** `pinpoint.` — all lowercase, no separator between the words, a trailing full stop in the accent colour. No icon.
-- **Text colour:** `#1C1C1A` (near black) — `#F1F5FF` on a dark/blue background
-- **Full-stop accent:** `#2563EB` (rich blue) — `#93C5FD` on a dark/blue background
+- **Text colour:** `#1C1C1A` (near black) — pure `#FFFFFF` on a dark/blue background
+- **Full-stop accent:** `#2563EB` (rich blue) — `rgba(255,255,255,0.35)` (translucent white) on a dark/blue background
+- **On-dark usage:** the nav bar (`bg-primary`, see NavBar below) renders the wordmark at `xl` size with `onDark` — this is the mark's primary real-world placement, not just a documented fallback state
 - **Font:** Plus Jakarta Sans, weight 700
 - **Letter spacing:** -0.03em
 - **Optional underline rule:** a short bar in the accent colour beneath the mark, width ≈ 2.4em relative to the wordmark's own font size — a hero/marketing flourish only, never in compact contexts (nav bar, favicon)
@@ -22,8 +25,8 @@ Chosen from an 8-direction exploration (v1.0 shipped the two-tone `pin`/`point` 
 const SIZES = { sm: 'text-sm', md: 'text-lg', lg: 'text-2xl', xl: 'text-4xl' }
 
 export default function Logo({ size = 'md', onDark = false, rule = false }) {
-  const ink = onDark ? '#F1F5FF' : '#1C1C1A'
-  const accent = onDark ? '#93C5FD' : '#2563EB'
+  const ink = onDark ? '#FFFFFF' : '#1C1C1A'
+  const accent = onDark ? 'rgba(255,255,255,0.35)' : '#2563EB'
   return (
     <span className="inline-flex flex-col items-start gap-1.5">
       <span className={`font-sans font-bold ${SIZES[size]}`} style={{ letterSpacing: '-0.03em', color: ink }}>
@@ -84,6 +87,8 @@ Kept for reference only — not in use.
 | `success-200` | `#BBF7D0` | Success badge border |
 | `warning-600` | `#D97706` | Warning states, low-confidence badge |
 | `warning-50`  | `#FFFBEB` | Warning badge background |
+
+*Exception: `amber-700` (`#B45309`, slightly darker than `warning-600`) is used instead in a few places — deliberately, for stronger contrast. On `amber-50`: `CitationOutput`'s "unsure"/low-confidence validation pill and "Corrected" pill. With no background at all (plain text directly on the page or a transparent form panel): `AutofillBar`'s extraction-warning notice and its error-state message.*
 | `error-600`   | `#DC2626` | Error states |
 | `error-50`    | `#FEF2F2` | Error badge background |
 
@@ -99,25 +104,18 @@ Kept for reference only — not in use.
 ### Font stack
 ```css
 --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
---font-citation: 'Crimson Pro', Georgia, 'Times New Roman', serif;
+--font-citation: 'Times New Roman', Times, Georgia, ui-serif, serif;
 --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 ```
 
-Install via `next/font/google`:
+Only `--font-sans` is loaded as a webfont — Times New Roman is a system font (ships with both Windows and macOS), so citation output needs no `next/font` entry, no hosting, and no `variable` CSS var:
 ```js
-import { Plus_Jakarta_Sans, Crimson_Pro } from 'next/font/google'
+import { Plus_Jakarta_Sans } from 'next/font/google'
 
 export const jakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
   weight: ['300', '400', '500', '600', '700', '800'],
   variable: '--font-sans',
-})
-
-export const crimsonPro = Crimson_Pro({
-  subsets: ['latin'],
-  weight: ['400'],
-  style: ['normal', 'italic'],
-  variable: '--font-citation',
 })
 ```
 
@@ -125,7 +123,7 @@ export const crimsonPro = Crimson_Pro({
 | Role | Size | Weight | Line height | Letter spacing | Usage |
 |------|------|--------|-------------|----------------|-------|
 | Display | 48px | 700 | 1.1 | -2px | Hero headline only |
-| H1 | 32px | 700 | 1.2 | -1px | Page titles |
+| H1 | 30px | 800 (extrabold) | 1.2 | -1px | Page titles — eg the generate screen's "AGLC4 Citation Generator" |
 | H2 | 24px | 600 | 1.3 | -0.5px | Section headings |
 | H3 | 18px | 600 | 1.4 | -0.3px | Card headings |
 | H4 | 15px | 600 | 1.4 | 0 | Sub-section labels |
@@ -137,11 +135,12 @@ export const crimsonPro = Crimson_Pro({
 | Micro | 10px | 600 | 1.3 | +0.6px | Badges, status pills (uppercase) |
 
 ### Citation output typography
-All generated citation text uses `--font-citation` (Crimson Pro, serif):
+All generated citation text uses `--font-citation` (Times New Roman, serif — a system font, not a webfont):
 - Font size: 15px
 - Line height: 1.8
 - Italic via `<em>` tags for case names, legislation, treaties, journal names, book titles
 - Never bold citation text
+- The Copy button on each output panel writes both a plain-text and an HTML clipboard flavour (`ClipboardItem` with `text/plain` + `text/html`), so italics survive a paste into Word/Docs instead of coming through as flat text
 
 ---
 
@@ -182,14 +181,18 @@ Use standard Tailwind spacing. Key values:
 
 ### NavBar
 ```
-Height: 56px
-Background: #FFFFFF
-Border bottom: 1px solid #E8E8E6
-Padding: 0 32px (desktop), 0 16px (mobile)
-Logo: left-aligned
-Nav links: right-aligned, gap 24px, font-size 14px, color #6B6B69, weight 500
-CTA button: rightmost
-Mobile: hamburger menu below 768px
+Background: #2563EB (primary blue) — not white
+Padding: 16px 16px (mobile) / 24px (sm) / 32px (lg), max content width 1152px, centred
+Logo: left-aligned, size "xl" (36px), onDark (white ink, translucent white full stop)
+Nav links: right-aligned, gap 24px, font-size 16px (text-base), weight 500
+  - Current: white (#FFFFFF)
+  - Followable, not current: white/75%, hover white
+  - "Coming soon" (Checker, Library — not yet built): white/40%, cursor not-allowed,
+    dark tooltip ("Coming soon") on hover
+No CTA button.
+Mobile (below sm/640px): only the logo shows — the link list is `hidden sm:flex`. None of the
+  four links are meaningfully usable one-handed at that width (two are inert placeholders), and
+  showing them at the larger logo size reproduced a horizontal-overflow bug once already.
 ```
 
 ### Buttons
@@ -227,16 +230,18 @@ Destructive:
 ### Inputs & textareas
 ```
 background: #FFFFFF
-border: 1.5px solid #E8E8E6
-border-radius: 8px
-padding: 10px 14px
+border: 1px solid #CFCECA (gray-300 — not gray-200; a visibly stronger border than most other
+  card/divider borders in the app, deliberately, since this is what defines the field's edge)
+border-radius: 8px (rounded-lg)
+padding: 8px 12px (py-2 px-3)
 font-size: 14px
 color: #1C1C1A
 placeholder color: #AEADA9
-focus: border-color #2563EB, box-shadow 0 0 0 3px rgba(37,99,235,0.12)
+focus: border-color #2563EB (brand-600), box-shadow 0 0 0 3px rgba(37,99,235,0.12) (shadow-ring-brand)
 error: border-color #DC2626
-disabled: background #FAFAF9, opacity 0.6
+disabled: opacity 0.6 (no background change — the field already has no fill to lighten)
 ```
+Applies to every text input, textarea, and `<select>` across the app — the 13 source-type forms, the AutofillBar's URL/paste fields, and the source-type dropdown all share one styling decision: **a white/unfilled field with a defined border does the work, not a grey fill.** A grey-fill treatment (`bg-gray-100`) was tried and rejected twice — it read as flat/murky since the form cards it sits inside are themselves transparent, sitting directly on the page's grey background, leaving the fill nothing to contrast against.
 
 ### Cards
 ```
@@ -256,6 +261,16 @@ Subtle card (secondary content):
   border: 1px solid #E8E8E6
   border-radius: 10px
   padding: 16px
+
+Form panel (the actual container around each source type's fields, and the AutofillBar):
+  background: transparent — no fill, sits directly on the page background
+  border: 1px solid #E8E8E6
+  border-radius: 14px
+  padding: 24px (form panel) / 16px (AutofillBar)
+  This is the most common card in the app and doesn't match either variant above — it's
+  deliberately unfilled, which is also why the Inputs spec's border needs to be a visible
+  gray-300 rather than a subtle gray-200: there's no white card underneath to lift a lighter
+  border against.
 ```
 
 ### Badges & pills
@@ -299,105 +314,93 @@ Corrected badge:
 
 ### Source type selector
 ```
-Button group, 7 buttons (Cases / Legislation / Journal Article / Book / Report / Website / Treaty)
-Default state:
-  background: #FFFFFF
-  border: 1.5px solid #E8E8E6
-  color: #6B6B69
-  border-radius: 8px
-  padding: 8px 14px
-  font-size: 13px
-  font-weight: 500
+A single <select> dropdown, not a button group — 11 options (Cases, Legislation, Journal Article,
+  Book, Report, Conference/Research Paper/Thesis, Website, Newspaper, Other Legislative Material,
+  International Material, Other Sources).
+Styled identically to the Inputs & textareas spec above (white/border-gray-300, same focus ring) —
+  one control the height of any other field, not a row of wrapped buttons.
+Label: "Source type", text-sm font-medium text-gray-700, 4px below
 
-Active/selected state:
-  background: #EFF6FF
-  border: 1.5px solid #2563EB
-  color: #2563EB
-  font-weight: 600
-
-Hover (unselected):
-  background: #F3F3F1
+Deliberately not a button group: with 11 source types (up from an original ~7), a wrapped button
+  row took two lines above the form on every screen size. A dropdown carries the same selection
+  contract (selected/onSelect) in a fraction of the vertical space.
 ```
 
 ### Citation output panels
 ```
-Container:
+Container (one per panel — Footnote citation / Subsequent reference / Bibliography entry):
   background: #FFFFFF
-  border: 1.5px solid #E8E8E6
-  border-radius: 12px
-  padding: 16px 20px
+  border: 1px solid #CFCECA (gray-300) — matches the Inputs spec's border exactly, deliberately
+  border-radius: 14px (rounded-xl)
+  padding: 20px (p-5)
 
-Label row:
-  display: flex, justify-content: space-between
-  label font: 10px, uppercase, #AEADA9, letter-spacing 0.6px
-  right side: validation badge
+Header row:
+  display: flex, justify-content: space-between, margin-bottom 12px
+  label: "Footnote citation" etc, text-base (16px) font-medium #1A1A18
+  rule reference below label: text-xs (12px) #AEADA9, eg "AGLC4 r 2.2"
+  right side: "Copy" button — bordered ghost button, border-gray-200, text-gray-600;
+    turns emerald-tinted (bg-emerald-50, border-emerald-200, text-emerald-600) with
+    "Copied ✓" text for 1.5s after a successful copy
+  No "Add to library" button — not implemented.
 
 Citation text:
-  font-family: Crimson Pro, serif
+  font-family: Times New Roman, serif (a system font — see Typography)
   font-size: 15px
   line-height: 1.8
   color: #1C1C1A
-  italic via <em> for legal names
+  italic via <em> for legal names — formatItalics() renders both the on-page HTML and the
+    text/html clipboard flavour written on Copy, so italics survive a paste into Word/Docs
 
-Action row (below citation):
-  gap: 8px, margin-top: 12px
-  "Copy" = primary button (small)
-  "Add to library" = ghost button (small)
-
-Loading state:
-  Pulse animation on citation text
-  "Verifying…" in #AEADA9, 12px
-
-Rule reference:
-  10px, #AEADA9, right-aligned in label row
-  eg "AGLC4 r 2.2"
+Above the three panels — a status/badge row, not per-panel:
+  Validating: spinner + "Verifying…", text-xs text-gray-400
+  Validated, high confidence: emerald pill, "AGLC4 check passed ✓"
+  Validated, medium/low confidence: amber pill (not emerald — a weaker claim than a full pass),
+    "AGLC4 check passed · {confidence} confidence"
+  Corrected: amber pill, "Corrected · {confidence} confidence"
+  Unvalidated (AI check didn't run or failed): gray pill, "Not AGLC4-checked" — shown explicitly
+    rather than rendering nothing, so "no badge" is never mistaken for "checked and fine"
+  Optional source-verification badge (eg a CrossRef/AustLII match) alongside: primary-tint pill
+Deterministic field-level warnings (missing core element, a substantive AGLC4 practice note) render
+  as their own full-width amber notes below the badge row, above the panels — distinct from the
+  validation badge, which is about the *formatted text's* correctness.
 ```
 
 ### AutofillBar
 ```
 Container:
-  background: #FFFFFF
-  border: 1.5px solid #E8E8E6
-  border-radius: 10px
-  padding: 12px 16px
-  display: flex, gap: 10px, align-items: center
+  background: transparent (no fill — sits directly on the page)
+  border: 1px solid #E8E8E6
+  border-radius: 14px (rounded-xl)
+  padding: 16px
 
-Icon: magnifying glass, 16px, #AEADA9
-Input: flex: 1, no border, no background, font-size 14px, placeholder #AEADA9
-Button: "Fill →" primary button, padding 8px 14px
+Header row: "Fill in details automatically" label (text-base font-medium #4A4A47) left,
+  "Clear" text-button right (disabled/greyed until there's something to clear)
 
-States:
-  Loading: spinner + "Fetching…" in #AEADA9
-  Success: "Fields filled ✓" in #059669, 2s then reset
-  Partial: "Some fields filled — please review" in #D97706
-  Error: "Couldn't read this source — fill manually" in #DC2626
+Two rows, no icon (no magnifying glass):
+  Row 1 — URL/DOI: text input (styled per Inputs & textareas spec) + "Fill ↵" primary
+    button, 88px fixed width, spinner + "Fill" while loading
+  Row 2 — paste: 4-row textarea (same field styling) + "Extract" primary button, same
+    88px width, to line up with row 1
+  Beside both rows: a square "Upload PDF" drop target, bg-primary, 144×144px from sm up
+    (full-width 56px bar below sm, stacked above the two rows) — accepts a dropped or
+    clicked PDF; parsed entirely client-side, the file itself is never sent to the server
+
+Below the rows — a persistent amber notice (not a transient state):
+  "⚠ Automated extraction can get things wrong — always check the result against the
+  actual source before relying on it." — text-sm font-medium text-amber-700
+
+Transient states (replace each other, shown under the notice):
+  Loading: "Reading page…" → "Extracting details…" (AI paths) or a source-specific message
+    (eg "Fetching from AustLII…"), text-xs text-gray-500; a "Larger documents take a little
+    longer — still working…" note appears after 4s on slow requests (PDFs especially)
+  Success, high confidence: "Fields filled ✓", text-xs text-emerald-600, resets after 2s
+  Success, low confidence: "Some fields filled — review them", same styling
+  Error: message is specific to the failure (eg "That doesn't look like a URL or DOI —
+    please paste a link or fill fields manually.", "Couldn't read this page — please fill
+    manually."), text-xs text-amber-700
 ```
 
-### Tab navigation (Generator tabs)
-```
-Tab bar:
-  background: #FFFFFF
-  border-bottom: 1px solid #E8E8E6
-  padding: 0 24px
-
-Tab item:
-  font-size: 14px
-  font-weight: 500
-  color: #6B6B69
-  padding: 12px 16px
-  border-bottom: 2px solid transparent
-  cursor: pointer
-
-Active tab:
-  color: #2563EB
-  border-bottom: 2px solid #2563EB
-  font-weight: 600
-
-Coming soon tab:
-  color: #CFCECA
-  cursor: default
-  tooltip on hover: "Coming soon"
-```
+*(There is no separate in-page tab bar for the generator screen — the Generate/Checker/Library/Guide links live in the NavBar itself, spec'd above. The "Coming soon" tooltip treatment described there is the real implementation of what this section originally proposed as a standalone component.)*
 
 ---
 
@@ -405,91 +408,102 @@ Coming soon tab:
 
 ```
 ┌─────────────────────────────────────────────────┐
-│  NavBar (56px)                                  │
+│  NavBar — blue background                       │
+│  pinpoint. [xl, onDark]   Generate Checker       │
+│                           Library Guide          │
 ├─────────────────────────────────────────────────┤
-│  Tab bar: Generate / Checker / Library / Guide  │
+│  Page title + subtitle (H1 extrabold 30px)       │
 ├─────────────────────────────────────────────────┤
-│  AutofillBar (full width, 16px padding)         │
+│  AutofillBar (full width, 16px padding)          │
 ├─────────────────────────────────────────────────┤
-│  SourceTypeSelector (7 buttons)                 │
-├──────────────────────┬──────────────────────────┤
-│                      │                          │
-│  Form panel (left)   │  Output panel (right)    │
-│  flex: 1             │  flex: 1                 │
-│                      │  - Footnote citation     │
-│  Dynamic fields      │  - Subsequent ref        │
-│  based on source     │  - Bibliography          │
-│  type                │  - Rule note             │
-│                      │                          │
-└──────────────────────┴──────────────────────────┘
+│  SourceTypeSelector — a <select> dropdown        │
+├──────────────────────┬───────────────────────────┤
+│                      │                           │
+│  Form panel (left)   │  Output panel (right)     │
+│  1.15fr              │  1fr                      │
+│                      │  - Status/badge row       │
+│  Dynamic fields      │  - Footnote citation      │
+│  based on source     │  - Subsequent ref         │
+│  type                │  - Bibliography entry     │
+│                      │                           │
+└──────────────────────┴───────────────────────────┘
 
-Desktop: two-column grid, gap 24px, padding 24px
-Mobile: single column, output below form
-Max content width: 1100px, centred
+lg (1024px) and up: two-column grid (grid-cols-1 lg:grid-cols-2), gap 32px (gap-8)
+Below lg: single column, output stacks below form
+Max content width: 1152px (max-w-6xl), centred — deliberately not widened on large monitors;
+  a dense multi-field form scans worse stretched across an ultra-wide screen than capped
 ```
 
 ---
 
 ## 7. Tailwind Config
 
-```js
+The config actually shipped diverges from an earlier draft of this section in one deliberate way: rather than introducing new `surface`/`ink`/`border` token namespaces, the `gray` scale itself is overridden wholesale to this spec's exact warm-neutral hexes. Every component already used plain `gray-*` Tailwind classes (`border-gray-200`, `text-gray-700`, `bg-gray-50`, …) — remapping the scale brings the whole existing UI onto the spec's palette without renaming classes across ~30 files. `primary`/`primary-tint`/`on-tint` are likewise kept (not renamed to `brand.600` everywhere) since components already reference them. This is the real, current file:
+
+```ts
 // tailwind.config.ts
-import type { Config } from 'tailwindcss'
+import type { Config } from "tailwindcss";
 
 const config: Config = {
-  content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}'],
+  content: [
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./lib/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
   theme: {
     extend: {
-      fontFamily: {
-        sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
-        citation: ['var(--font-citation)', 'Georgia', 'serif'],
-      },
       colors: {
+        background: "var(--background)",
+        foreground: "var(--foreground)",
+        primary: "#2563EB", // blue-600
+        "primary-tint": "#EFF6FF", // blue-50
+        "on-tint": "#1D4ED8", // blue-700
         brand: {
-          50:  '#EFF6FF',
-          100: '#DBEAFE',
-          200: '#BFDBFE',
-          400: '#60A5FA',
-          600: '#2563EB',
-          700: '#1D4ED8',
-          800: '#1E40AF',
+          50: "#EFF6FF",
+          100: "#DBEAFE",
+          200: "#BFDBFE",
+          400: "#60A5FA",
+          600: "#2563EB",
+          700: "#1D4ED8",
+          800: "#1E40AF",
         },
-        surface: {
-          page:  '#FAFAF9',
-          card:  '#FFFFFF',
-          subtle: '#F3F3F1',
+        gray: {
+          50: "#FAFAF9",
+          100: "#F3F3F1",
+          200: "#E8E8E6",
+          300: "#CFCECA",
+          400: "#AEADA9",
+          500: "#8F8E8A",
+          600: "#6B6B69",
+          700: "#4A4A47",
+          800: "#2E2E2B",
+          900: "#1A1A18",
+          950: "#1C1C1A",
         },
-        ink: {
-          primary:   '#1C1C1A',
-          secondary: '#6B6B69',
-          tertiary:  '#AEADA9',
-          disabled:  '#CFCECA',
-        },
-        border: {
-          DEFAULT: '#E8E8E6',
-          strong:  '#CFCECA',
-          brand:   '#2563EB',
-        },
+      },
+      fontFamily: {
+        sans: ["var(--font-sans)", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+        // Times New Roman is a system font (Windows/macOS ship it), not loaded via next/font.
+        citation: ['"Times New Roman"', "Times", "Georgia", "ui-serif", "serif"],
+        serif: ['"Times New Roman"', "Times", "Georgia", "ui-serif", "serif"],
       },
       borderRadius: {
-        '4': '4px',
-        DEFAULT: '8px',
-        'lg': '10px',
-        'xl': '14px',
-        '2xl': '16px',
+        md: "8px",
+        lg: "10px",
+        xl: "14px",
+        "2xl": "16px",
       },
       boxShadow: {
-        'xs': '0 1px 2px rgba(0,0,0,0.04)',
-        'card': '0 1px 3px rgba(0,0,0,0.06)',
-        'ring-brand': '0 0 0 3px rgba(37,99,235,0.12)',
-        'featured': '0 0 0 1.5px #2563EB, 0 4px 16px rgba(37,99,235,0.12)',
+        xs: "0 1px 2px rgba(0,0,0,0.04)",
+        card: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
+        "ring-brand": "0 0 0 3px rgba(37,99,235,0.12)",
+        featured: "0 0 0 1.5px #2563EB, 0 4px 16px rgba(37,99,235,0.12)",
       },
     },
   },
   plugins: [],
-}
-
-export default config
+};
+export default config;
 ```
 
 ---
@@ -502,35 +516,34 @@ export default config
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  body {
-    background-color: #FAFAF9;
-    color: #1C1C1A;
-    font-family: var(--font-sans);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
+:root {
+  --background: #fafaf9;
+  --foreground: #1c1c1a;
+}
 
-  * {
-    border-color: #E8E8E6;
-  }
+body {
+  color: var(--foreground);
+  background: var(--background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 
-  /* Citation text rendered with serif font */
-  .citation-text {
-    font-family: var(--font-citation);
-    font-size: 15px;
-    line-height: 1.8;
-    color: #1C1C1A;
-  }
+/* Citation output text — Times New Roman, applied via the `font-citation` Tailwind class in
+   CitationOutput.tsx; this plain class exists for anywhere else that needs the same treatment. */
+.citation-text {
+  font-family: 'Times New Roman', Times, Georgia, serif;
+  font-size: 15px;
+  line-height: 1.8;
+  color: #1a1a18;
+}
 
-  /* Uppercase section labels */
-  .label-caps {
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    color: #AEADA9;
-  }
+/* Uppercase section labels (rule references, panel captions). */
+.label-caps {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #aeada9;
 }
 ```
 
@@ -554,10 +567,10 @@ export default config
 **Do:**
 - Use `#FAFAF9` for page backgrounds — never pure white
 - Use Plus Jakarta Sans for all UI text
-- Use Crimson Pro for all citation output text
+- Use Times New Roman for all citation output text (a system font — nothing to load or host)
 - Keep the logo wordmark always lowercase
 - Use the blue ring focus style consistently
-- Leave generous whitespace — this is not a dense tool
+- Leave clear breathing room between fields and sections — this *is* a dense, multi-field tool (11 source types, up to a dozen fields each), so spacing does the work of keeping it scannable rather than page width (see §6's max-width note)
 
 **Don't:**
 - Add drop shadows heavier than `shadow-card`
