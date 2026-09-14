@@ -72,12 +72,12 @@ export default function SaveToLibraryButton({ sourceType, fields, result }: Save
 
   if (userId === null) {
     return (
-      <p className="text-sm text-gray-500">
-        <Link href="/auth/login" className="font-medium text-primary underline hover:text-[#1D4ED8]">
-          Sign in
-        </Link>{' '}
-        to save citations to your library.
-      </p>
+      <div className="flex items-center gap-2 rounded-lg bg-primary-tint px-4 py-2.5 text-sm text-gray-700">
+        <span>Want to save this citation?</span>
+        <Link href="/auth/login" className="font-semibold text-primary hover:text-[#1D4ED8]">
+          Sign in →
+        </Link>
+      </div>
     )
   }
 
