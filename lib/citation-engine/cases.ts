@@ -13,7 +13,9 @@ function formatReported(fields: CaseFields): { footnote: string; bibliography: s
 
   return {
     footnote: ensureFullStop(`${caseNameItalic} ${citationCore}${pinpointPart}${judgePart}`),
-    bibliography: ensureFullStop(`${caseNameItalic} ${citationCore}`),
+    // No trailing full stop in the bibliography entry — unlike the footnote, per the requested
+    // formatting for case bibliography entries.
+    bibliography: `${caseNameItalic} ${citationCore}`,
   }
 }
 
@@ -25,7 +27,7 @@ function formatUnreportedMnc(fields: CaseFields): { footnote: string; bibliograp
 
   return {
     footnote: ensureFullStop(`${caseNameItalic} ${citationCore}${pinpointPart}${judgePart}`),
-    bibliography: ensureFullStop(`${caseNameItalic} ${citationCore}`),
+    bibliography: `${caseNameItalic} ${citationCore}`,
   }
 }
 
@@ -36,7 +38,7 @@ function formatUnreportedNoMnc(fields: CaseFields): { footnote: string; bibliogr
 
   return {
     footnote: ensureFullStop(`${caseNameItalic} ${parenthetical}${pinpointPart}`),
-    bibliography: ensureFullStop(`${caseNameItalic} ${parenthetical}`),
+    bibliography: `${caseNameItalic} ${parenthetical}`,
   }
 }
 
