@@ -274,7 +274,7 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
   return (
     <div className="rounded-xl border border-gray-200 p-4">
       <div className="mb-3 flex items-center justify-between">
-        <span className="text-sm font-medium text-gray-700">Fill in details automatically</span>
+        <span className="text-base font-medium text-gray-700">Fill in details automatically</span>
         <button
           type="button"
           onClick={handleClear}
@@ -388,10 +388,10 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
         </button>
       </div>
 
-      <p className="mt-2 flex items-start gap-1.5 text-xs font-medium text-amber-700">
+      <p className="mt-2 flex items-start gap-1.5 text-sm font-medium text-amber-700">
         <svg
-          width="14"
-          height="14"
+          width="16"
+          height="16"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"

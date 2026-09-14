@@ -104,7 +104,7 @@ function Panel({ label, rule, text }: PanelProps) {
     <div className="rounded-xl border border-gray-200 p-5">
       <div className="mb-3 flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-medium text-gray-900">{label}</h3>
+          <h3 className="text-base font-medium text-gray-900">{label}</h3>
           <p className="text-xs text-gray-400">{rule}</p>
         </div>
         <button
