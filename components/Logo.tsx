@@ -19,8 +19,8 @@ interface LogoProps {
 }
 
 export default function Logo({ size = 'md', onDark = false, rule = false }: LogoProps) {
-  const ink = onDark ? '#F1F5FF' : '#1C1C1A'
-  const accent = onDark ? '#93C5FD' : '#2563EB'
+  const ink = onDark ? '#FFFFFF' : '#1C1C1A'
+  const accent = onDark ? 'rgba(255,255,255,0.35)' : '#2563EB'
 
   return (
     <span className="inline-flex flex-col items-start gap-1.5">

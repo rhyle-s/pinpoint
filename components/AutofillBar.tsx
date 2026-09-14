@@ -290,7 +290,7 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
           target on the right sized to match that column's height exactly — see the 84px note on
           the button below for why that's a hardcoded pixel value rather than an aspect-ratio
           utility. */}
-      <div className="flex items-stretch gap-2">
+      <div className="flex flex-col items-stretch gap-2 sm:flex-row">
         <div className="flex flex-1 flex-col gap-2">
           <div className="flex gap-2">
             <input
@@ -301,7 +301,7 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
               onKeyDown={handleKeyDown}
               placeholder="Paste a URL or DOI…"
               disabled={isLoading}
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-gray-50"
+              className="w-full rounded-lg border border-transparent bg-gray-100 px-3 py-2 text-sm text-gray-900 focus:border-brand-600 focus:outline-none focus:shadow-ring-brand disabled:opacity-60"
             />
             <button
               type="button"
@@ -336,7 +336,7 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
               }
               rows={4}
               disabled={isLoading}
-              className="w-full resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-gray-50"
+              className="w-full resize-none rounded-lg border border-transparent bg-gray-100 px-3 py-2 text-sm text-gray-900 focus:border-brand-600 focus:outline-none focus:shadow-ring-brand disabled:opacity-60"
             />
             <button
               type="button"
@@ -357,13 +357,14 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
           disabled={isLoading}
           className="hidden"
         />
-        {/* Measured match for the two rows beside it (the 36px URL row, the 8px gap-2, and the
-            paste textarea's own rows={4} height) — `aspect-square` was tried first and doesn't
-            resolve reliably against a flex-stretched cross-size in this layout (confirmed live:
-            it rendered ~41px wide against an 84px-tall stretch), so this is a hardcoded pixel
-            size instead, not a lazier version of the "correct" self-computing approach.
-            Re-measure and update this if the left column's own height ever changes again (eg the
-            textarea's `rows` value) — it will not resize itself. */}
+        {/* Full-width 56px bar below sm (stacked layout, so no fixed square needed). From sm up,
+            a 144px square measured to match the two rows beside it (the 36px URL row, the 8px
+            gap-2, and the paste textarea's own rows={4} height) — `aspect-square` was tried first
+            and doesn't resolve reliably against a flex-stretched cross-size in this layout
+            (confirmed live: it rendered ~41px wide against an 84px-tall stretch), so this is a
+            hardcoded pixel size instead, not a lazier version of the "correct" self-computing
+            approach. Re-measure and update this if the left column's own height ever changes
+            again (eg the textarea's `rows` value) — it will not resize itself. */}
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
@@ -374,8 +375,7 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
           disabled={isLoading}
           aria-label="Upload a PDF"
           title="Upload or drop a PDF — it's read in your browser and never uploaded to our servers"
-          style={{ width: 144, height: 144 }}
-          className={`flex shrink-0 flex-col items-center justify-center gap-1 rounded-lg text-center text-xs font-medium leading-tight text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+          className={`flex h-14 w-full shrink-0 flex-row items-center justify-center gap-1 rounded-lg text-center text-xs font-medium leading-tight text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:h-[144px] sm:w-[144px] sm:flex-col ${
             isDraggingFile ? 'bg-[#1D4ED8]' : 'bg-primary hover:bg-[#1D4ED8]'
           }`}
         >

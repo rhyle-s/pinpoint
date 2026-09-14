@@ -22,7 +22,7 @@ function Field({ label, optional, children }: { label: string; optional?: boolea
 }
 
 const inputClass =
-  'w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary'
+  'w-full rounded-lg border border-transparent bg-gray-100 px-3 py-2 text-sm text-gray-900 focus:border-brand-600 focus:outline-none focus:shadow-ring-brand'
 
 // The institution field means a different thing depending on the document type — a university
 // for a thesis, the conference name for a conference paper, the publishing body otherwise — so

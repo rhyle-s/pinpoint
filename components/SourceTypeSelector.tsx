@@ -31,7 +31,7 @@ export default function SourceTypeSelector({ selected, onSelect }: SourceTypeSel
       <select
         value={selected}
         onChange={(e) => onSelect(e.target.value as SourceType)}
-        className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+        className="w-full rounded-lg border border-transparent bg-gray-100 px-3 py-2 text-sm text-gray-900 focus:border-brand-600 focus:outline-none focus:shadow-ring-brand"
       >
         {SOURCE_TYPES.map((source) => (
           <option key={source.type} value={source.type}>
