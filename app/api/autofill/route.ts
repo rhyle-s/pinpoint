@@ -5,15 +5,18 @@ import { AutofillResult } from '@/lib/autofill/types'
 
 // Must stay comfortably above ai-extract.ts's own FETCH_TIMEOUT_MS (20s) plus room for the AI
 // call itself — a PDF fetch can involve two sequential requests (see fetch.ts's User-Agent
-// fallback) on top of the download and parse, so the fetch phase alone can approach 20s.
-const REQUEST_TIMEOUT_MS = 28_000
+// fallback) on top of the download and parse, so the fetch phase alone can approach 20s. Bumped
+// from 28s to 40s for extra headroom on top of that — a fast, tiny (sub-200KB) PDF was confirmed
+// live to still occasionally need most of a 12s round trip just for the AI extraction call once
+// the fetch itself is done, and 28s left too little margin for that call to have a slow moment.
+const REQUEST_TIMEOUT_MS = 40_000
 const MAX_INPUT_LENGTH = 500
 
-// The route enforces its own 28s cap above via Promise.race; this only stops the *platform* from
-// killing the function first — Vercel's default is 10s on Hobby, well under REQUEST_TIMEOUT_MS, so
-// without this a slow (large-PDF) fetch would be cut off before the graceful timeoutResult() could
-// ever return. 45s leaves headroom over the internal cap without approaching any plan's ceiling.
-export const maxDuration = 45
+// The route enforces its own REQUEST_TIMEOUT_MS cap above via Promise.race; this only stops the
+// *platform* from killing the function first. Vercel's default function timeout is 300s on all
+// plans as of early 2026, so 60s leaves generous headroom over the internal cap without being
+// anywhere near a real ceiling.
+export const maxDuration = 60
 
 function timeoutResult(): AutofillResult {
   return {
