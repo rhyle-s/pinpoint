@@ -36,7 +36,7 @@ function Field({ label, optional, children }: { label: string; optional?: boolea
 }
 
 const inputClass =
-  'w-full rounded-lg border border-transparent bg-gray-100 px-3 py-2 text-sm text-gray-900 focus:border-brand-600 focus:outline-none focus:shadow-ring-brand'
+  'w-full rounded-lg border border-gray-200 bg-gray-100 px-3 py-2 text-sm text-gray-900 focus:border-brand-600 focus:outline-none focus:shadow-ring-brand'
 
 export default function EuropeanMaterialsForm({ fields, onChange }: EuropeanMaterialsFormProps) {
   function update(patch: Partial<InternationalMaterialFields>) {
