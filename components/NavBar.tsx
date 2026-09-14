@@ -43,7 +43,10 @@ function AuthControl() {
 
   if (email === null) {
     return (
-      <Link href="/auth/login" className="text-base font-medium text-white/75 hover:text-white">
+      <Link
+        href="/auth/login"
+        className="rounded-lg bg-white px-4 py-1.5 text-sm font-semibold text-primary transition-colors hover:bg-white/90"
+      >
         Sign in
       </Link>
     )
@@ -54,7 +57,11 @@ function AuthControl() {
       <span className="text-base font-medium text-white/75" title={email}>
         {truncateEmail(email)}
       </span>
-      <button type="button" onClick={handleSignOut} className="text-base font-medium text-white/75 hover:text-white">
+      <button
+        type="button"
+        onClick={handleSignOut}
+        className="rounded-lg bg-white px-4 py-1.5 text-sm font-semibold text-primary transition-colors hover:bg-white/90"
+      >
         Sign out
       </button>
     </div>
