@@ -149,7 +149,7 @@ function Panel({ label, rule, text }: PanelProps) {
           {copied ? 'Copied ✓' : 'Copy'}
         </button>
       </div>
-      {/* Crimson Pro serif, 15px/1.8 line-height per the brand spec's citation-output typography —
+      {/* Times New Roman, 15px/1.8 line-height per the brand spec's citation-output typography —
           distinct from the app's own UI sans-serif everywhere else. formatItalics already renders
           case names/legislation/journal names etc as <em>, never bold. */}
       <p

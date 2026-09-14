@@ -14,11 +14,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Citation output text — Crimson Pro serif per the brand spec, applied via the `font-citation`
+/* Citation output text — Times New Roman per the brand spec, applied via the `font-citation`
    Tailwind class in CitationOutput.tsx; this plain class exists for anywhere else that needs the
    same treatment without pulling in the rest of Tailwind's text-base defaults. */
 .citation-text {
-  font-family: var(--font-citation), Georgia, serif;
+  font-family: 'Times New Roman', Times, Georgia, serif;
   font-size: 15px;
   line-height: 1.8;
   color: #1a1a18;

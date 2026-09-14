@@ -50,9 +50,11 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["var(--font-sans)", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
-        citation: ["var(--font-citation)", "Georgia", "ui-serif", "serif"],
+        // Times New Roman is a system font (Windows/macOS ship it), not loaded via next/font —
+        // Georgia/ui-serif/serif are the fallback chain for platforms that lack it.
+        citation: ['"Times New Roman"', "Times", "Georgia", "ui-serif", "serif"],
         // Kept as an alias — a couple of places reference `font-serif` directly.
-        serif: ["var(--font-citation)", "Georgia", "ui-serif", "serif"],
+        serif: ['"Times New Roman"', "Times", "Georgia", "ui-serif", "serif"],
       },
       borderRadius: {
         md: "8px",
