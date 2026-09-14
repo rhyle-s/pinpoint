@@ -408,7 +408,9 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
 
       {isLoading && (
         <div className="mt-2 space-y-1">
-          <p className="text-xs text-gray-500">{loadingMessage}</p>
+          <p className={`text-xs ${loadingMessage === 'Extracting details…' ? 'font-medium text-primary' : 'text-gray-500'}`}>
+            {loadingMessage}
+          </p>
           {slowNotice && <p className="text-xs text-gray-500">{slowNotice}</p>}
         </div>
       )}
