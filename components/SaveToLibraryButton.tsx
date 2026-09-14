@@ -86,12 +86,12 @@ export default function SaveToLibraryButton({ sourceType, fields, result }: Save
       type="button"
       onClick={handleSave}
       disabled={status === 'saving'}
-      className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+      className={`rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
         status === 'saved'
-          ? 'border-emerald-200 bg-emerald-50 text-emerald-600'
+          ? 'bg-emerald-600 hover:bg-emerald-700'
           : status === 'error'
-            ? 'border-amber-200 bg-amber-50 text-amber-700'
-            : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+            ? 'bg-amber-600 hover:bg-amber-700'
+            : 'bg-primary hover:bg-[#1D4ED8]'
       }`}
     >
       {status === 'saving' ? 'Saving…' : status === 'saved' ? 'Saved ✓' : status === 'error' ? "Couldn't save — try again" : 'Save to library'}
