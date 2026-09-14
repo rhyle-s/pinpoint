@@ -34,25 +34,137 @@ async function copyRich(plainText: string, htmlText: string) {
   }
 }
 
-function CitationCard({ citation, onDeleted }: { citation: SavedCitation; onDeleted: (id: string) => void }) {
-  const [confirmingDelete, setConfirmingDelete] = useState(false)
-  const [copiedField, setCopiedField] = useState<'footnote' | 'bibliography' | null>(null)
-  const [deleting, setDeleting] = useState(false)
+function CopyIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="9" y="9" width="12" height="12" rx="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </svg>
+  )
+}
 
-  async function handleCopy(field: 'footnote' | 'bibliography') {
-    const plain = formatItalics(field === 'footnote' ? citation.footnote_text : citation.bibliography_text, 'plain')
-    const html =
-      (field === 'footnote' ? citation.footnote_html : citation.bibliography_html) ??
-      formatItalics(field === 'footnote' ? citation.footnote_text : citation.bibliography_text, 'html')
+function TrashIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M3 6h18" />
+      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+    </svg>
+  )
+}
 
-    const ok = await copyRich(plain, html)
+function ChevronIcon({ expanded }: { expanded: boolean }) {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      className={`shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`}
+    >
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  )
+}
+
+// Small icon button shared by the row-level and expanded-detail copy/delete controls — text is
+// screen-reader-only (aria-label) so the row stays dense, with a native title tooltip for sighted
+// hover users.
+function IconButton({
+  label,
+  onClick,
+  active,
+  danger,
+  children,
+}: {
+  label: string
+  onClick: (e: React.MouseEvent) => void
+  active?: boolean
+  danger?: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+      className={`flex h-7 w-7 items-center justify-center rounded-md border transition-colors ${
+        active
+          ? 'border-emerald-200 bg-emerald-50 text-emerald-600'
+          : danger
+            ? 'border-red-200 bg-red-50 text-red-600'
+            : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700'
+      }`}
+    >
+      {children}
+    </button>
+  )
+}
+
+function DetailPanel({ label, rule, text, html }: { label: string; rule?: string; text: string; html: string | null }) {
+  const [copied, setCopied] = useState(false)
+
+  async function handleCopy() {
+    const ok = await copyRich(formatItalics(text, 'plain'), html ?? formatItalics(text, 'html'))
     if (ok) {
-      setCopiedField(field)
-      setTimeout(() => setCopiedField(null), 1500)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
     }
   }
 
-  async function handleDelete() {
+  if (!text) return null
+
+  return (
+    <div className="flex items-start justify-between gap-3 py-2">
+      <div>
+        <p className="text-xs font-medium text-gray-500">
+          {label}
+          {rule && <span className="ml-1.5 font-normal text-gray-400">{rule}</span>}
+        </p>
+        <p
+          className="mt-0.5 font-citation text-[15px] leading-[1.7] text-gray-900"
+          dangerouslySetInnerHTML={{ __html: html ?? formatItalics(text, 'html') }}
+        />
+      </div>
+      <IconButton label={`Copy ${label.toLowerCase()}`} onClick={handleCopy} active={copied}>
+        <CopyIcon />
+      </IconButton>
+    </div>
+  )
+}
+
+function CitationRow({
+  citation,
+  expanded,
+  onToggle,
+  onDeleted,
+}: {
+  citation: SavedCitation
+  expanded: boolean
+  onToggle: () => void
+  onDeleted: (id: string) => void
+}) {
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [copiedBiblio, setCopiedBiblio] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
+  async function handleQuickCopy(e: React.MouseEvent) {
+    e.stopPropagation()
+    const ok = await copyRich(
+      formatItalics(citation.bibliography_text, 'plain'),
+      citation.bibliography_html ?? formatItalics(citation.bibliography_text, 'html'),
+    )
+    if (ok) {
+      setCopiedBiblio(true)
+      setTimeout(() => setCopiedBiblio(false), 1500)
+    }
+  }
+
+  async function handleDelete(e: React.MouseEvent) {
+    e.stopPropagation()
     if (!confirmingDelete) {
       setConfirmingDelete(true)
       return
@@ -70,60 +182,57 @@ function CitationCard({ citation, onDeleted }: { citation: SavedCitation; onDele
   }
 
   return (
-    <div className="rounded-xl border border-gray-300 bg-white p-5">
-      <div className="mb-3 flex items-center justify-between">
-        <span
-          className={`inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${SOURCE_TYPE_PILL_CLASSES[citation.source_type]}`}
-        >
-          {SOURCE_TYPE_LABELS[citation.source_type]}
-        </span>
-        <span className="text-xs text-gray-400">{DATE_FORMAT.format(new Date(citation.created_at))}</span>
-      </div>
-
-      <p
-        className="font-citation text-[15px] leading-[1.8] text-gray-900"
-        dangerouslySetInnerHTML={{
-          __html: citation.bibliography_html ?? formatItalics(citation.bibliography_text, 'html'),
-        }}
-      />
-
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={() => handleCopy('footnote')}
-          className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
-            copiedField === 'footnote'
-              ? 'border-emerald-200 bg-emerald-50 text-emerald-600'
-              : 'border-gray-200 text-gray-600 hover:border-gray-300'
-          }`}
-        >
-          {copiedField === 'footnote' ? 'Copied ✓' : 'Copy footnote'}
-        </button>
-        <button
-          type="button"
-          onClick={() => handleCopy('bibliography')}
-          className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
-            copiedField === 'bibliography'
-              ? 'border-emerald-200 bg-emerald-50 text-emerald-600'
-              : 'border-gray-200 text-gray-600 hover:border-gray-300'
-          }`}
-        >
-          {copiedField === 'bibliography' ? 'Copied ✓' : 'Copy bibliography'}
-        </button>
-        <button
-          type="button"
-          onClick={handleDelete}
-          disabled={deleting}
-          className={`ml-auto rounded-md border px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-            confirmingDelete
-              ? 'border-red-200 bg-red-50 text-red-600'
-              : 'border-gray-200 text-gray-600 hover:border-gray-300'
-          }`}
-        >
-          {deleting ? 'Deleting…' : confirmingDelete ? 'Are you sure?' : 'Delete'}
-        </button>
-      </div>
-    </div>
+    <>
+      <tr onClick={onToggle} className="cursor-pointer border-b border-gray-200 last:border-0 hover:bg-gray-50">
+        <td className="whitespace-nowrap py-2.5 pl-4 pr-3">
+          <span
+            className={`inline-flex w-fit items-center rounded-full px-2 py-0.5 text-xs font-medium ${SOURCE_TYPE_PILL_CLASSES[citation.source_type]}`}
+          >
+            {SOURCE_TYPE_LABELS[citation.source_type]}
+          </span>
+        </td>
+        <td className="max-w-0 w-full py-2.5 pr-3">
+          <p
+            className="truncate font-citation text-[15px] text-gray-900"
+            title={formatItalics(citation.bibliography_text, 'plain')}
+            dangerouslySetInnerHTML={{
+              __html: citation.bibliography_html ?? formatItalics(citation.bibliography_text, 'html'),
+            }}
+          />
+        </td>
+        <td className="whitespace-nowrap py-2.5 pr-3 text-xs text-gray-400">
+          {DATE_FORMAT.format(new Date(citation.created_at))}
+        </td>
+        <td className="whitespace-nowrap py-2.5 pr-4">
+          <div className="flex items-center justify-end gap-1.5">
+            <IconButton label="Copy bibliography" onClick={handleQuickCopy} active={copiedBiblio}>
+              <CopyIcon />
+            </IconButton>
+            <IconButton
+              label={confirmingDelete ? 'Confirm delete' : 'Delete'}
+              onClick={handleDelete}
+              danger={confirmingDelete}
+            >
+              {deleting ? <span className="text-[10px]">…</span> : <TrashIcon />}
+            </IconButton>
+            <ChevronIcon expanded={expanded} />
+          </div>
+        </td>
+      </tr>
+      {expanded && (
+        <tr className="border-b border-gray-200 bg-gray-50 last:border-0">
+          <td colSpan={4} className="px-4 py-1">
+            <div className="divide-y divide-gray-200">
+              <DetailPanel label="Footnote citation" text={citation.footnote_text} html={citation.footnote_html} />
+              {citation.subsequent_text && (
+                <DetailPanel label="Subsequent reference" text={citation.subsequent_text} html={null} />
+              )}
+              <DetailPanel label="Bibliography entry" text={citation.bibliography_text} html={citation.bibliography_html} />
+            </div>
+          </td>
+        </tr>
+      )}
+    </>
   )
 }
 
@@ -133,6 +242,7 @@ export default function LibraryClient({ userId }: { userId: string }) {
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<SortOption>('newest')
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
+  const [expandedId, setExpandedId] = useState<string | null>(null)
 
   useEffect(() => {
     const supabase = createClient()
@@ -180,6 +290,7 @@ export default function LibraryClient({ userId }: { userId: string }) {
 
   function handleDeleted(id: string) {
     setCitations((prev) => prev.filter((c) => c.id !== id))
+    setExpandedId((current) => (current === id ? null : current))
   }
 
   const visibleCitations = useMemo(() => {
@@ -257,10 +368,28 @@ export default function LibraryClient({ userId }: { userId: string }) {
           <p className="text-sm text-gray-500">No citations match your search.</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {visibleCitations.map((citation) => (
-            <CitationCard key={citation.id} citation={citation} onDeleted={handleDeleted} />
-          ))}
+        <div className="overflow-x-auto rounded-xl border border-gray-300 bg-white">
+          <table className="w-full border-collapse text-left">
+            <thead>
+              <tr className="border-b border-gray-200 text-xs font-medium text-gray-500">
+                <th className="whitespace-nowrap py-2 pl-4 pr-3 font-medium">Type</th>
+                <th className="py-2 pr-3 font-medium">Citation</th>
+                <th className="whitespace-nowrap py-2 pr-3 font-medium">Saved</th>
+                <th className="py-2 pr-4" />
+              </tr>
+            </thead>
+            <tbody>
+              {visibleCitations.map((citation) => (
+                <CitationRow
+                  key={citation.id}
+                  citation={citation}
+                  expanded={expandedId === citation.id}
+                  onToggle={() => setExpandedId((current) => (current === citation.id ? null : citation.id))}
+                  onDeleted={handleDeleted}
+                />
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
