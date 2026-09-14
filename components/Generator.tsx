@@ -27,7 +27,11 @@ import {
   SourceType,
   WebsiteFields,
 } from '@/lib/citation-engine/types'
+import { canGenerate, recordGeneration } from '@/lib/usage'
+import { createClient } from '@/lib/supabase/client'
 import AutofillBar from './AutofillBar'
+import SaveToLibraryButton from './SaveToLibraryButton'
+import UsageGate from './UsageGate'
 import SourceTypeSelector from './SourceTypeSelector'
 import CaseForm from './CaseForm'
 import LegislationForm from './LegislationForm'
@@ -214,6 +218,11 @@ const OTHER_SOURCES_RULES: Record<
 
 const VALIDATION_DEBOUNCE_MS = 800
 
+// Separate from VALIDATION_DEBOUNCE_MS above (tuned for AI-call frequency, not for "the student is
+// done with this citation") — see the recordGeneration call site for why this needs its own,
+// longer window.
+const GENERATION_RECORD_DEBOUNCE_MS = 4000
+
 const ALL_SOURCE_TYPES: SourceType[] = [
   'case',
   'legislation',
@@ -297,6 +306,45 @@ export default function Generator({ initialSourceType }: GeneratorProps) {
     DEFAULT_INTERNATIONAL_MATERIAL_FIELDS,
   )
   const [otherSourcesFields, setOtherSourcesFields] = useState<OtherSourcesFields>(DEFAULT_OTHER_SOURCES_FIELDS)
+
+  // Free-tier gating (see lib/usage.ts). userIdRef mirrors userId state for the async
+  // recordGeneration call inside the validation-settle effect below, which doesn't itself depend
+  // on userId — reading the state value directly there would risk a stale closure if auth state
+  // resolves mid-flight; the ref always has the current value.
+  const [userId, setUserId] = useState<string | null | undefined>(undefined) // undefined = still resolving
+  const userIdRef = useRef<string | null | undefined>(undefined)
+  const [usageGate, setUsageGate] = useState<{ allowed: boolean; requiresLogin: boolean }>({
+    allowed: true,
+    requiresLogin: false,
+  })
+  const lastRecordedFootnoteRef = useRef<string | null>(null)
+  const recordTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (recordTimerRef.current) clearTimeout(recordTimerRef.current)
+    }
+  }, [])
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data }) => {
+      userIdRef.current = data.user?.id ?? null
+      setUserId(data.user?.id ?? null)
+    })
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      userIdRef.current = session?.user?.id ?? null
+      setUserId(session?.user?.id ?? null)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
+  useEffect(() => {
+    if (userId === undefined) return
+    canGenerate(userId).then((res) => setUsageGate({ allowed: res.allowed, requiresLogin: res.requiresLogin }))
+  }, [userId])
 
   // Tracks exactly which fields, per source type, the student has personally typed into — so a
   // fresh autofill can rebuild everything else from scratch while leaving those specific edits
@@ -431,6 +479,30 @@ export default function Generator({ initialSourceType }: GeneratorProps) {
           if (requestIdRef.current === requestId) {
             setResult(validated)
             setValidating(false)
+
+            // Counts one "generation" per citation the student settles on, not per keystroke or
+            // per field. The 800ms debounce above is tuned for AI-call frequency — a student
+            // editing several fields of the *same* citation (case name, then year, then a
+            // pinpoint) settles a genuinely different footnote each time, so recording
+            // immediately here would burn through the free-tier limit on one citation. Instead,
+            // restart a longer, separate timer on every settle; only the footnote still current
+            // after GENERATION_RECORD_DEBOUNCE_MS of no further edits gets recorded. Skipped
+            // entirely while auth state is still resolving (userIdRef.current === undefined)
+            // rather than defaulting to "anonymous", so a signed-in student's first citation on
+            // page load can't get mis-recorded against the localStorage counter instead of their
+            // account.
+            if (recordTimerRef.current) clearTimeout(recordTimerRef.current)
+            if (validated.footnote) {
+              recordTimerRef.current = setTimeout(() => {
+                if (validated.footnote !== lastRecordedFootnoteRef.current && userIdRef.current !== undefined) {
+                  lastRecordedFootnoteRef.current = validated.footnote
+                  const uid = userIdRef.current
+                  recordGeneration(uid).then(() => {
+                    canGenerate(uid).then((res) => setUsageGate({ allowed: res.allowed, requiresLogin: res.requiresLogin }))
+                  })
+                }
+              }, GENERATION_RECORD_DEBOUNCE_MS)
+            }
           }
         })
         .catch(() => {
@@ -792,8 +864,17 @@ export default function Generator({ initialSourceType }: GeneratorProps) {
           )}
         </div>
 
-        <div>
-          <CitationOutput result={result} validating={validating || autofillLoading} rules={rules} badge={badge} />
+        <div className="space-y-3">
+          {usageGate.allowed ? (
+            <>
+              <CitationOutput result={result} validating={validating || autofillLoading} rules={rules} badge={badge} />
+              {currentFields && (
+                <SaveToLibraryButton sourceType={selectedSourceType} fields={currentFields} result={result} />
+              )}
+            </>
+          ) : (
+            <UsageGate requiresLogin={usageGate.requiresLogin} />
+          )}
         </div>
       </div>
     </div>
