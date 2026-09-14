@@ -130,7 +130,7 @@ function Panel({ label, rule, text }: PanelProps) {
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-gray-100 p-5">
+    <div className="rounded-xl border border-gray-300 bg-white p-5">
       <div className="mb-3 flex items-center justify-between">
         <div>
           <h3 className="text-base font-medium text-gray-900">{label}</h3>
