@@ -11,6 +11,10 @@ type TypeFilter = 'all' | SourceType
 
 const DATE_FORMAT = new Intl.DateTimeFormat('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })
 
+// Sentinel <option> value for "+ Create new collection…" in CollectionEditor's dropdown — distinct
+// from a real collection name (which could theoretically collide with a literal string otherwise).
+const CREATE_NEW_VALUE = '__create_new__'
+
 async function copyRich(plainText: string, htmlText: string) {
   try {
     if (typeof ClipboardItem !== 'undefined' && navigator.clipboard.write) {
@@ -165,10 +169,16 @@ function CollectionEditor({
   onLabelChanged: (id: string, label: string | null) => void
   onClose: () => void
 }) {
+  // 'select' shows a dropdown of existing collections (plus "No collection" and "+ Create new") —
+  // only meaningful when there's at least one existing collection to pick from. 'create' is a
+  // plain text input for typing a brand new name; it's the only mode at all when there are no
+  // existing collections yet, since a dropdown with nothing but "+ Create new" in it would be a
+  // pointless extra click.
+  const hasExisting = collectionOptions.length > 0
+  const [mode, setMode] = useState<'select' | 'create'>(hasExisting ? 'select' : 'create')
   const [value, setValue] = useState(citation.label ?? '')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
-  const datalistId = `collection-options-${citation.id}`
 
   async function handleSave(e: React.MouseEvent) {
     e.stopPropagation()
@@ -187,23 +197,58 @@ function CollectionEditor({
     }
   }
 
+  function handleSelectChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    if (e.target.value === CREATE_NEW_VALUE) {
+      setMode('create')
+      setValue('')
+    } else {
+      setValue(e.target.value)
+    }
+  }
+
   return (
     <div className="flex items-center gap-2 py-2" onClick={(e) => e.stopPropagation()}>
       <p className="w-32 shrink-0 text-xs font-medium text-gray-500">Collection</p>
-      <input
-        type="text"
-        list={datalistId}
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        placeholder="Type new or pick existing"
-        autoFocus
-        className="min-w-[180px] flex-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-brand-600 focus:outline-none focus:shadow-ring-brand"
-      />
-      <datalist id={datalistId}>
-        {collectionOptions.map((name) => (
-          <option key={name} value={name} />
-        ))}
-      </datalist>
+      {mode === 'select' ? (
+        <select
+          value={value}
+          onChange={handleSelectChange}
+          autoFocus
+          className="min-w-[180px] flex-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-brand-600 focus:outline-none focus:shadow-ring-brand"
+        >
+          <option value="">No collection</option>
+          {collectionOptions.map((name) => (
+            <option key={name} value={name}>
+              {name}
+            </option>
+          ))}
+          <option value={CREATE_NEW_VALUE}>+ Create new collection…</option>
+        </select>
+      ) : (
+        <>
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder="eg Torts Assessment 2"
+            autoFocus
+            className="min-w-[180px] flex-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-brand-600 focus:outline-none focus:shadow-ring-brand"
+          />
+          {hasExisting && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                setMode('select')
+                setValue(citation.label ?? '')
+              }}
+              className="shrink-0 text-xs font-medium text-gray-500 hover:text-gray-700"
+            >
+              Choose existing
+            </button>
+          )}
+        </>
+      )}
       <IconButton label="Save collection" onClick={handleSave} active={saved} tone="blue">
         {saving ? <span className="text-[10px]">…</span> : saved ? '✓' : '↵'}
       </IconButton>
@@ -347,6 +392,71 @@ function CitationRow({
   )
 }
 
+// "Delete" here means removing the collection as a grouping, not the citations in it — every
+// citation that had this label goes back to "No collection" (label: null), same end state as if
+// each had been individually un-assigned via CollectionEditor, just done in one bulk update
+// instead of one row at a time.
+function ManageCollectionsPanel({
+  collectionCounts,
+  onCollectionDeleted,
+}: {
+  collectionCounts: { name: string; count: number }[]
+  onCollectionDeleted: (name: string) => void
+}) {
+  const [confirmingName, setConfirmingName] = useState<string | null>(null)
+  const [deletingName, setDeletingName] = useState<string | null>(null)
+
+  async function handleDelete(name: string) {
+    if (confirmingName !== name) {
+      setConfirmingName(name)
+      return
+    }
+
+    setDeletingName(name)
+    const supabase = createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) {
+      setDeletingName(null)
+      return
+    }
+
+    const { error } = await supabase.from('citations').update({ label: null }).eq('user_id', user.id).eq('label', name)
+    setDeletingName(null)
+    setConfirmingName(null)
+    if (!error) onCollectionDeleted(name)
+  }
+
+  if (collectionCounts.length === 0) {
+    return <p className="text-sm text-gray-500">No collections yet — use the + button on a citation to create one.</p>
+  }
+
+  return (
+    <ul className="divide-y divide-gray-200">
+      {collectionCounts.map(({ name, count }) => (
+        <li key={name} className="flex items-center justify-between gap-3 py-2">
+          <span className="text-sm text-gray-900">
+            {name} <span className="text-gray-400">({count})</span>
+          </span>
+          <button
+            type="button"
+            onClick={() => handleDelete(name)}
+            disabled={deletingName === name}
+            className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+              confirmingName === name
+                ? 'border-red-200 bg-red-50 text-red-600'
+                : 'border-gray-200 text-gray-600 hover:border-gray-300'
+            }`}
+          >
+            {deletingName === name ? 'Removing…' : confirmingName === name ? 'Are you sure?' : 'Delete collection'}
+          </button>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
 export default function LibraryClient({ userId }: { userId: string }) {
   const [citations, setCitations] = useState<SavedCitation[]>([])
   const [loading, setLoading] = useState(true)
@@ -356,6 +466,7 @@ export default function LibraryClient({ userId }: { userId: string }) {
   const [collectionFilter, setCollectionFilter] = useState<string>('all')
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [collectionEditorId, setCollectionEditorId] = useState<string | null>(null)
+  const [managingCollections, setManagingCollections] = useState(false)
 
   useEffect(() => {
     const supabase = createClient()
@@ -393,6 +504,16 @@ export default function LibraryClient({ userId }: { userId: string }) {
           setCitations((prev) => prev.filter((c) => c.id !== payload.old.id))
         },
       )
+      // Covers both a single CollectionEditor rename and a bulk "delete collection" (every row
+      // with that label set to null at once) — without this, either only shows up locally in the
+      // tab that made the change, not in any other open tab/device.
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'citations', filter: `user_id=eq.${userId}` },
+        (payload) => {
+          setCitations((prev) => prev.map((c) => (c.id === payload.new.id ? (payload.new as SavedCitation) : c)))
+        },
+      )
       .subscribe()
 
     return () => {
@@ -411,6 +532,11 @@ export default function LibraryClient({ userId }: { userId: string }) {
     setCitations((prev) => prev.map((c) => (c.id === id ? { ...c, label } : c)))
   }
 
+  function handleCollectionDeleted(name: string) {
+    setCitations((prev) => prev.map((c) => (c.label === name ? { ...c, label: null } : c)))
+    setCollectionFilter((current) => (current === name ? 'all' : current))
+  }
+
   // Distinct collection names actually present, alphabetised — drives both the filter dropdown's
   // options and whether "Uncategorised" is worth offering at all (only if some citation has no
   // label yet).
@@ -423,6 +549,11 @@ export default function LibraryClient({ userId }: { userId: string }) {
     }
     return { names: Array.from(names).sort((a, b) => a.localeCompare(b)), hasUncategorised }
   }, [citations])
+
+  const collectionCounts = useMemo(
+    () => collections.names.map((name) => ({ name, count: citations.filter((c) => c.label === name).length })),
+    [collections.names, citations],
+  )
 
   const visibleCitations = useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -494,6 +625,15 @@ export default function LibraryClient({ userId }: { userId: string }) {
             {collections.hasUncategorised && <option value={UNCATEGORISED_COLLECTION}>Uncategorised</option>}
           </select>
         )}
+        {collections.names.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setManagingCollections((v) => !v)}
+            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-gray-400"
+          >
+            Manage collections
+          </button>
+        )}
         <a
           href={collectionFilter === 'all' ? '/api/library/export' : `/api/library/export?collection=${encodeURIComponent(collectionFilter)}`}
           className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#1D4ED8]"
@@ -501,6 +641,15 @@ export default function LibraryClient({ userId }: { userId: string }) {
           Export bibliography (.docx)
         </a>
       </div>
+
+      {managingCollections && (
+        <div className="rounded-xl border border-gray-200 p-4">
+          <p className="mb-2 text-sm font-medium text-gray-700">
+            Manage collections <span className="font-normal text-gray-400">— deleting a collection keeps its citations, just uncategorised</span>
+          </p>
+          <ManageCollectionsPanel collectionCounts={collectionCounts} onCollectionDeleted={handleCollectionDeleted} />
+        </div>
+      )}
 
       <p className="text-sm text-gray-500">
         {citations.length} {citations.length === 1 ? 'citation' : 'citations'} saved
