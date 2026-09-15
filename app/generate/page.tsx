@@ -24,8 +24,8 @@ export default function GeneratePage({ searchParams }: { searchParams: { type?: 
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-      <div className="mb-10 max-w-2xl">
-        <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-primary">AGLC4 · 4th edition</span>
+      <div className="mb-6 max-w-2xl">
+        <span className="text-sm font-bold uppercase tracking-[0.08em] text-primary">AGLC4 · 4th edition</span>
         <h1 className="mt-3 text-[2.25rem] font-extrabold leading-[1.1] tracking-tight text-gray-900 sm:text-[2.5rem]" style={{ textWrap: 'balance' }}>
           Citation Generator
         </h1>

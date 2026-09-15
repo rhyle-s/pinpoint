@@ -579,6 +579,11 @@ user picked the icon-row one. `app/generate/page.tsx`:
   a small `bg-primary-tint` icon circle (no border) next to plain label text, laid out with `gap-x-6`
   instead of packed into chip padding. The icons themselves are unchanged (same SVGs), only the
   container around each one changed.
+- Quick follow-up: the kicker text bumped from `text-[11px]` to `text-sm` (the user wanted it more
+  prominent), and the header block's own bottom margin dropped from `mb-10` to `mb-6` (the user wanted
+  less space between the trust row and the "Fill in details automatically" card below it) — the
+  header's *internal* spacing (kicker→heading→subtitle→trust row) is untouched, only the gap to
+  whatever comes after the header changed.
 
 ## Deployment
 
