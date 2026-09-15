@@ -902,7 +902,7 @@ export default function LibraryClient({ userId }: { userId: string }) {
       </div>
 
       {(collections.names.length > 0 || collections.hasUncategorised) && (
-        <p className="-mt-3 text-xs text-gray-400">
+        <p className="-mt-3 text-sm font-medium text-gray-600">
           Exports your whole library by default — select a collection above first to export just that collection.
         </p>
       )}
@@ -947,7 +947,7 @@ export default function LibraryClient({ userId }: { userId: string }) {
           </button>
         </div>
       ) : (
-        <p className="text-sm text-gray-500">
+        <p className="text-base font-medium text-gray-700">
           {citations.length} {citations.length === 1 ? 'citation' : 'citations'} saved
         </p>
       )}
