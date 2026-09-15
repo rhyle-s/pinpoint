@@ -65,6 +65,22 @@ function PlusIcon() {
   )
 }
 
+function EditIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3Z" />
+    </svg>
+  )
+}
+
+function FolderIcon({ className }: { className?: string }) {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
+      <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" />
+    </svg>
+  )
+}
+
 function ChevronIcon({ expanded }: { expanded: boolean }) {
   return (
     <svg
@@ -470,10 +486,11 @@ function ManageCollectionsPanel({
   }
 
   return (
-    <ul className="divide-y divide-gray-200">
+    <ul className="space-y-1">
       {collectionCounts.map(({ name, count }) =>
         renamingName === name ? (
-          <li key={name} className="flex items-center gap-2 py-2">
+          <li key={name} className="flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-2">
+            <FolderIcon className="shrink-0 text-gray-400" />
             <input
               type="text"
               value={renameValue}
@@ -481,47 +498,45 @@ function ManageCollectionsPanel({
               autoFocus
               className="min-w-[160px] flex-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-brand-600 focus:outline-none focus:shadow-ring-brand"
             />
-            <button
-              type="button"
+            <IconButton
+              label="Save new name"
               onClick={() => handleConfirmRename(name)}
-              disabled={savingRename || !renameValue.trim()}
-              className="rounded-md border border-brand-200 bg-primary-tint px-2.5 py-1 text-xs font-medium text-primary transition-colors hover:bg-brand-100 disabled:cursor-not-allowed disabled:opacity-50"
+              tone="blue"
             >
-              {savingRename ? 'Saving…' : 'Save'}
-            </button>
+              {savingRename ? <span className="text-[10px]">…</span> : '✓'}
+            </IconButton>
             <button
               type="button"
               onClick={() => setRenamingName(null)}
-              className="rounded-md border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600 hover:border-gray-300"
+              className="shrink-0 text-xs font-medium text-gray-500 hover:text-gray-700"
             >
               Cancel
             </button>
           </li>
         ) : (
-          <li key={name} className="flex items-center justify-between gap-3 py-2">
-            <span className="text-sm text-gray-900">
-              {name} <span className="text-gray-400">({count})</span>
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => startRename(name)}
-                className="rounded-md border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600 hover:border-gray-300"
-              >
-                Rename
-              </button>
-              <button
-                type="button"
+          <li
+            key={name}
+            className="group flex items-center justify-between gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-gray-50"
+          >
+            <div className="flex min-w-0 items-center gap-2">
+              <FolderIcon className="shrink-0 text-gray-400" />
+              <span className="truncate text-sm font-medium text-gray-900">{name}</span>
+              <span className="inline-flex w-fit shrink-0 items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
+                {count}
+              </span>
+            </div>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <IconButton label="Rename collection" onClick={() => startRename(name)} tone="blue">
+                <EditIcon />
+              </IconButton>
+              <IconButton
+                label={confirmingName === name ? 'Confirm delete collection' : 'Delete collection'}
                 onClick={() => handleDelete(name)}
-                disabled={deletingName === name}
-                className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-                  confirmingName === name
-                    ? 'border-red-200 bg-red-50 text-red-600'
-                    : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                }`}
+                danger={confirmingName === name}
+                tone="blue"
               >
-                {deletingName === name ? 'Removing…' : confirmingName === name ? 'Are you sure?' : 'Delete collection'}
-              </button>
+                {deletingName === name ? <span className="text-[10px]">…</span> : <TrashIcon />}
+              </IconButton>
             </div>
           </li>
         ),
@@ -888,7 +903,8 @@ export default function LibraryClient({ userId }: { userId: string }) {
 
       {managingCollections && (
         <div className="rounded-xl border border-gray-200 p-4">
-          <p className="mb-2 text-sm font-medium text-gray-700">
+          <p className="mb-3 flex items-center gap-1.5 text-sm font-medium text-gray-700">
+            <FolderIcon className="shrink-0 text-gray-400" />
             Manage collections <span className="font-normal text-gray-400">— deleting a collection keeps its citations, just uncategorised</span>
           </p>
           <ManageCollectionsPanel
