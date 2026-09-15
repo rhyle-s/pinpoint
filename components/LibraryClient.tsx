@@ -959,7 +959,7 @@ export default function LibraryClient({ userId }: { userId: string }) {
       <aside className="space-y-6 lg:sticky lg:top-24">
         <div>
           <h1 className="text-[1.75rem] font-extrabold tracking-tight text-gray-900">Library</h1>
-          <p className="mt-1 text-sm text-gray-500">Your saved AGLC4 citations</p>
+          <p className="mt-1 text-sm font-medium text-gray-600">Your saved AGLC4 citations</p>
         </div>
 
         <div className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-3 py-2 shadow-xs transition-colors focus-within:border-brand-600 focus-within:shadow-ring-brand">
@@ -1124,7 +1124,11 @@ export default function LibraryClient({ userId }: { userId: string }) {
           </div>
         )}
 
-        {citations.length > 0 && visibleCitations.length !== 0 && (
+        {/* Gated only on the library having *any* citations at all — not on the current filter
+            combination having results. Gating on visibleCitations too used to hide this row the
+            moment a filter combo (eg a collection with no Books in it) matched nothing, which
+            trapped the student: no controls left on screen to change the filter back. */}
+        {citations.length > 0 && (
           <div className="flex flex-wrap items-center gap-3">
             <select
               value={typeFilter}

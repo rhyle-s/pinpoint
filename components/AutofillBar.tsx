@@ -273,15 +273,24 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
 
   return (
     <div>
-      {/* This card's own "Fill in details automatically" heading now lives in the wrapping card
-          Generator.tsx renders around this component — only the Clear affordance stays here, since
-          it's the only other piece the old header row held. */}
-      <div className="mb-3 flex justify-end">
+      {/* Heading and Clear share one row (rather than the heading living in Generator.tsx's wrapping
+          card with Clear on its own row below) so there's only one row of vertical space between
+          "Fill in details automatically" and the URL input, not two. */}
+      <div className="mb-3 flex items-center justify-between gap-2.5">
+        <div className="flex items-center gap-2.5">
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-tint text-primary">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3z" />
+              <path d="M19 14l.8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8L19 14z" />
+            </svg>
+          </span>
+          <h2 className="text-[13px] font-bold uppercase tracking-wide text-gray-900">Fill in details automatically</h2>
+        </div>
         <button
           type="button"
           onClick={handleClear}
           disabled={!canClear}
-          className="text-xs font-medium text-gray-500 hover:text-gray-700 hover:underline disabled:cursor-not-allowed disabled:opacity-40"
+          className="shrink-0 text-xs font-medium text-gray-500 hover:text-gray-700 hover:underline disabled:cursor-not-allowed disabled:opacity-40"
         >
           Clear
         </button>

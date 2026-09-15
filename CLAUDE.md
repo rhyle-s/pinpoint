@@ -494,6 +494,23 @@ reachable by reverting these commits.
   deleted outright — dead code once nothing referenced it, not left in place unused. The type pill
   itself is untouched and still coloured — it's the one place per-type colour is actually doing useful
   work (identifying a row's type at a glance), so it's the one that stayed.
+- **Second follow-up: source type back to a dropdown, tighter autofill-card spacing, a real Library
+  bug fix.** `SourceTypeSelector.tsx` reverted from the icon-tile grid back to a `<select>` — but kept
+  in the same `rounded-2xl shadow-card` section at the same width, so it still lines up with the
+  `AGLC4 check passed` column on the right exactly as the tile grid did (that alignment comes from
+  both being the grid's first child in their respective columns, not from anything specific to tiles
+  vs a dropdown). The gap between "Fill in details automatically" and the URL input was two rows of
+  vertical space (the heading's own row, then Clear on its own row below) — the heading moved back
+  *into* `AutofillBar.tsx` itself so it shares one row with Clear, removing a full row of spacing;
+  `Generator.tsx`'s wrapping `<section>` now just wraps `<AutofillBar>` directly with no header of its
+  own. **Also a real bug, not just a style tweak**: the Library filter/sort row was gated on
+  `citations.length > 0 && visibleCitations.length !== 0` — meant to hide it only for a genuinely empty
+  library, but the second half also hid it the moment any filter combination (eg a collection with no
+  Books in it) matched zero rows, which trapped the student with no visible control to change the
+  filter back. Fixed by dropping the `visibleCitations` half of that condition — the row now shows
+  whenever the library has *any* citations, regardless of what the current filter combo turns up.
+  "Your saved AGLC4 citations" also darkened from `text-gray-500` to `text-sm font-medium text-gray-600`
+  per the same "make X more prominent" pattern used elsewhere this session.
 
 ## Deployment
 

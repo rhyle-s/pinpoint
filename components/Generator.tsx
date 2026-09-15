@@ -634,15 +634,6 @@ export default function Generator({ initialSourceType }: GeneratorProps) {
   return (
     <div className="space-y-6">
       <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-card sm:p-6">
-        <div className="mb-4 flex items-center gap-2.5">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-tint text-primary">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3z" />
-              <path d="M19 14l.8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8L19 14z" />
-            </svg>
-          </span>
-          <h2 className="text-[13px] font-bold uppercase tracking-wide text-gray-900">Fill in details automatically</h2>
-        </div>
         <AutofillBar onAutofill={handleAutofill} onLoadingChange={setAutofillLoading} />
       </section>
 
