@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { Document, Packer, Paragraph, TextRun } from 'docx'
+import { AlignmentType, Document, Packer, Paragraph, TextRun } from 'docx'
 import { createClient } from '@/lib/supabase/server'
 import { CitationFields, SourceType } from '@/lib/citation-engine/types'
 import {
@@ -82,6 +82,7 @@ export async function GET(request: NextRequest) {
           new TextRun({ text: `${section} `, size: CITATION_FONT_SIZE + 2 }),
           new TextRun({ text: BIBLIOGRAPHY_SECTION_LABELS[section], italics: true, size: CITATION_FONT_SIZE + 2 }),
         ],
+        alignment: AlignmentType.CENTER,
         spacing: { before: 300, after: 200 },
       }),
       ...entries.map(
@@ -115,6 +116,7 @@ export async function GET(request: NextRequest) {
           // document instead of the built-in style's own (different) heading font.
           new Paragraph({
             children: [new TextRun({ text: 'Bibliography', bold: true, size: 32, font: CITATION_FONT, color: '000000' })],
+            alignment: AlignmentType.CENTER,
             spacing: { after: 300 },
           }),
           ...bodyParagraphs,

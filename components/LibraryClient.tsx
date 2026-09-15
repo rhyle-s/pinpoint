@@ -901,6 +901,12 @@ export default function LibraryClient({ userId }: { userId: string }) {
         </a>
       </div>
 
+      {(collections.names.length > 0 || collections.hasUncategorised) && (
+        <p className="-mt-3 text-xs text-gray-400">
+          Exports your whole library by default — select a collection above first to export just that collection.
+        </p>
+      )}
+
       {managingCollections && (
         <div className="rounded-xl border border-gray-200 p-4">
           <p className="mb-3 flex items-center gap-1.5 text-sm font-medium text-gray-700">
