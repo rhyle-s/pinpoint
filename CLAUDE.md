@@ -637,6 +637,20 @@ collapses two genuinely different code paths into one.
   nothing at all on touch), so `AutofillBar.tsx`'s circular PDF button gained an always-visible small
   "PDF" caption underneath it — same button/handlers, just no longer relying on hover to say what it's
   for.
+- **Follow-up: "Cite" button, PDF moved inside the bar, copy finished, one label tightened.** "Fill in
+  details" → "Cite" (loading label "Filling…" → "Citing…" to match). The PDF button moved from a
+  separate circle sitting outside the pill to an inline `icon + "PDF"` chip *inside* the same bordered
+  bar, right next to Cite — its drag/drop handlers, click-to-browse, and `runUpload` are all completely
+  untouched, only its position and shape changed; the standalone "PDF" caption from the previous round
+  is gone since there's no longer room below it once it's inline, so the label moved next to the icon
+  instead. The subtitle's ending — left as "Pinpoint will extract..." with the rest to be written — is
+  now "...Pinpoint will extract the details and generate your footnote citation, subsequent reference,
+  and bibliography entry." (`app/generate/page.tsx`) — the user had rejected an earlier, more generic
+  "Pinpoint fills in the details for you" draft, but this time asked for a self-referential "Pinpoint
+  will..." opening themselves, just wanting the rest completed; this version names the actual outcome
+  (the three AGLC4 elements) rather than restating the mechanism a third time. "Saves to your own
+  library" → "Save to library" in the trust row, tightened to match the other two entries' plain
+  imperative phrasing ("Autofill from...", "Rule-checked against...").
 
 ## Deployment
 

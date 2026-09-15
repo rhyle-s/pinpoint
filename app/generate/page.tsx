@@ -30,8 +30,8 @@ export default function GeneratePage({ searchParams }: { searchParams: { type?: 
           Citation Generator
         </h1>
         <p className="mt-3 text-[15px] leading-relaxed text-gray-600">
-          Paste a link/URL, DOI, or any known details — or upload a PDF — then copy the footnote citation,
-          subsequent reference, and bibliography entry.
+          Paste a link/URL, DOI, or any known details — or upload a PDF — Pinpoint will extract the details and
+          generate your footnote citation, subsequent reference, and bibliography entry.
         </p>
         <div className="mt-5 flex flex-wrap justify-center gap-x-6 gap-y-3">
           <div className="flex items-center gap-2">
@@ -57,7 +57,7 @@ export default function GeneratePage({ searchParams }: { searchParams: { type?: 
                 <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" />
               </svg>
             </span>
-            <span className="text-[13.5px] font-medium text-gray-600">Saves to your own library</span>
+            <span className="text-[13.5px] font-medium text-gray-600">Save to library</span>
           </div>
         </div>
       </div>

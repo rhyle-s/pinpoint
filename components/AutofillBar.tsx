@@ -277,52 +277,35 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
 
   return (
     <div>
-      <div className="flex items-center gap-2">
-        <div className="flex flex-1 items-center gap-2 rounded-full border border-gray-300 bg-gray-50 py-1.5 pl-4 pr-1.5 transition-colors focus-within:border-brand-600 focus-within:bg-white focus-within:shadow-ring-brand">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-gray-400">
-            <path d="M9 15l6-6" />
-            <path d="M11 5l1-1a4 4 0 0 1 6 6l-1 1" />
-            <path d="M13 19l-1 1a4 4 0 0 1-6-6l1-1" />
-          </svg>
-          <input
-            type="text"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            onPaste={handlePaste}
-            onKeyDown={handleKeyDown}
-            placeholder="Paste a URL, DOI, or any known details…"
-            disabled={isLoading}
-            className="w-full bg-transparent px-1 py-1 text-sm text-gray-900 outline-none placeholder:text-gray-400 disabled:opacity-60"
-          />
-          {canClear && (
-            <button
-              type="button"
-              onClick={handleClear}
-              aria-label="Clear"
-              className="shrink-0 rounded-full p-1 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M18 6 6 18" />
-                <path d="m6 6 12 12" />
-              </svg>
-            </button>
-          )}
+      <div className="flex items-center gap-2 rounded-full border border-gray-300 bg-gray-50 py-1.5 pl-4 pr-1.5 transition-colors focus-within:border-brand-600 focus-within:bg-white focus-within:shadow-ring-brand">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-gray-400">
+          <path d="M9 15l6-6" />
+          <path d="M11 5l1-1a4 4 0 0 1 6 6l-1 1" />
+          <path d="M13 19l-1 1a4 4 0 0 1-6-6l1-1" />
+        </svg>
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onPaste={handlePaste}
+          onKeyDown={handleKeyDown}
+          placeholder="Paste a URL, DOI, or any known details…"
+          disabled={isLoading}
+          className="w-full bg-transparent px-1 py-1 text-sm text-gray-900 outline-none placeholder:text-gray-400 disabled:opacity-60"
+        />
+        {canClear && (
           <button
             type="button"
-            onClick={() => runSmartFill(value)}
-            disabled={isLoading || !value.trim()}
-            className="shrink-0 whitespace-nowrap rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={handleClear}
+            aria-label="Clear"
+            className="shrink-0 rounded-full p-1 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600"
           >
-            {isLoading ? (
-              <span className="flex items-center justify-center gap-2">
-                <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-                Filling…
-              </span>
-            ) : (
-              'Fill in details'
-            )}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
           </button>
-        </div>
+        )}
 
         <input
           ref={fileInputRef}
@@ -332,34 +315,49 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
           disabled={isLoading}
           className="hidden"
         />
-        {/* A hover title alone doesn't say what this circle does at a glance (and does nothing on
-            touch) — the small "PDF" label underneath is the always-visible version of the same
-            explanation. */}
-        <div className="flex flex-col items-center gap-1">
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            onDragEnter={handleDragEnter}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            disabled={isLoading}
-            aria-label="Upload a PDF"
-            title="Upload or drop a PDF — it's read in your browser and never uploaded to our servers"
-            className={`flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full border-2 border-dashed transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-              isDraggingFile
-                ? 'border-brand-500 bg-brand-100 text-primary'
-                : 'border-brand-200 bg-primary-tint text-primary hover:border-brand-400 hover:bg-brand-100'
-            }`}
-          >
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 3v12" />
-              <path d="m7 8 5-5 5 5" />
-              <path d="M5 21h14" />
-            </svg>
-          </button>
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">PDF</span>
-        </div>
+        {/* Icon + text rather than an icon alone — this used to be its own circle with a "PDF"
+            caption underneath it for the same reason (a hover title alone says nothing at a glance,
+            and nothing at all on touch); now that it sits inline in the bar there's no room for a
+            caption below it, so the label moved inline next to the icon instead. */}
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          onDragEnter={handleDragEnter}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          disabled={isLoading}
+          aria-label="Upload a PDF"
+          title="Upload or drop a PDF — it's read in your browser and never uploaded to our servers"
+          className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border-2 border-dashed px-3 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+            isDraggingFile
+              ? 'border-brand-500 bg-brand-100 text-primary'
+              : 'border-brand-200 bg-primary-tint text-primary hover:border-brand-400 hover:bg-brand-100'
+          }`}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 3v12" />
+            <path d="m7 8 5-5 5 5" />
+            <path d="M5 21h14" />
+          </svg>
+          PDF
+        </button>
+
+        <button
+          type="button"
+          onClick={() => runSmartFill(value)}
+          disabled={isLoading || !value.trim()}
+          className="shrink-0 whitespace-nowrap rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {isLoading ? (
+            <span className="flex items-center justify-center gap-2">
+              <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+              Citing…
+            </span>
+          ) : (
+            'Cite'
+          )}
+        </button>
       </div>
 
       <p className="mt-2.5 flex items-start justify-center gap-1.5 text-center text-xs font-medium text-amber-700">
