@@ -589,6 +589,41 @@ user picked the icon-row one. `app/generate/page.tsx`:
   scale/CTA changes — the header block gained `mx-auto text-center` and the trust row's flex gained
   `justify-center`; every element's own size/weight/colour is untouched, this is alignment only.
 
+### "Fill in details automatically" collapsed into one CTA pill
+
+The three separate input methods (a URL/DOI box + Fill button, a paste-text box + Extract button, a
+144px PDF drop square) became one pill: a single text field (`Paste a URL, DOI, or citation…`) + one
+"Fill in details" button + a small circular PDF-upload icon beside it. This is a **real behavioural
+merge**, not just a restyle — confirmed with the user first via two explicit questions (merge vs.
+just-restyle; PDF placement as a link-below vs. icon-beside, mocked up both before building) since it
+collapses two genuinely different code paths into one.
+- **`AutofillBar.tsx`**: the `pasteText` state is gone — `value` is now the only input state, shared
+  by both flows. New `runSmartFill(input)` is the single entry point (button click, Enter key, and
+  paste-to-autosubmit all call it): it runs `detectInputType(input)` — already returned `'unknown'`
+  for anything that isn't a recognisable URL/DOI shape, plain prose included, so no new detection
+  logic was needed — and routes to the existing `runAutofill` (→ `/api/autofill`) or `runPasteText`
+  (→ `/api/autofill-text`) accordingly. Both of those functions, and every PDF-upload handler
+  (drag/drop/click, `runUpload`), are otherwise untouched.
+- The separate "FILL IN DETAILS AUTOMATICALLY" header row and its "Clear" text button are gone — the
+  pill needs no label to explain itself, and Clear became a small inline "×" inside the pill itself,
+  shown only once there's something to clear (`canClear`, unchanged logic, just a different control).
+- The always-visible CrossRef-matching explainer (previously crammed into the paste-textarea's
+  placeholder as a second line) was dropped rather than relocated — it was largely redundant with the
+  same information `Generator.tsx`'s `autofillNotice` banner already surfaces in real time, right when
+  it's actually relevant, rather than pre-emptively.
+- **`Generator.tsx`**: the `rounded-2xl border shadow-card` card wrapping `<AutofillBar>` is gone —
+  the pill now sits directly on the page inside a `mx-auto max-w-2xl` div, matching the centred header
+  above it, not inside a bordered container (matches the approved mock-up, which had no card either).
+- Verified live: typed plain citation text → confirmed (via `read_network_requests`) it POSTs to
+  `/api/autofill-text`; typed a DOI → confirmed it POSTs to `/api/autofill` instead, including the
+  full loading → success cycle (spinner, "AGLC4 check passed", output panels updating) and a
+  deliberately-wrong DOI's error path. Enter-to-submit couldn't be interactively confirmed in this
+  session's browser-automation tool — its synthetic Return keypress arrives with `e.key === ''`
+  instead of `'Enter'` (confirmed by attaching a debug listener), which is a limitation of that tool,
+  not a code issue: `handleKeyDown`'s `if (e.key === 'Enter')` check is the exact same idiom the
+  pre-existing code already used, unchanged by this round, and the button-click path — which calls the
+  identical `runSmartFill` — is fully verified.
+
 ## Deployment
 
 The GitHub repo is `github.com/rhyle-s/pinpoint` (`origin`), all work on `main`. Not deployed anywhere yet — deploying will need `vercel login` run interactively (can't be done from a non-interactive agent session).

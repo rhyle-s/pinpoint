@@ -633,9 +633,9 @@ export default function Generator({ initialSourceType }: GeneratorProps) {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-card sm:p-6">
+      <div className="mx-auto max-w-2xl">
         <AutofillBar onAutofill={handleAutofill} onLoadingChange={setAutofillLoading} />
-      </section>
+      </div>
 
       {autofillNotice && (
         <div className="flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm">

@@ -37,7 +37,6 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
   const [loadingMessage, setLoadingMessage] = useState('')
   const [slowNotice, setSlowNotice] = useState('')
   const [feedbackText, setFeedbackText] = useState('')
-  const [pasteText, setPasteText] = useState('')
   const [isDraggingFile, setIsDraggingFile] = useState(false)
   const dragDepth = useRef(0)
   const aiMessageTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -113,7 +112,6 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
     }
 
     setStatus('loading')
-    setPasteText('')
 
     if (AI_EXTRACTION_TYPES.has(type)) {
       setLoadingMessage('Reading page…')
@@ -161,7 +159,6 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
 
     setStatus('loading')
     setValue('')
-    setPasteText('')
     setLoadingMessage('Reading the PDF in your browser…')
     startSlowNotice()
 
@@ -191,7 +188,6 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
     if (!trimmed) return
 
     setStatus('loading')
-    setValue('')
     setLoadingMessage('Extracting details…')
 
     try {
@@ -201,8 +197,8 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
         body: JSON.stringify({ text: trimmed }),
       })
       const result = await response.json()
-      // The pasted text is deliberately left in the box after a successful extract — the student
-      // may want to re-read it against the filled fields, or tweak and re-run it.
+      // Deliberately left in the box after a successful extract — the student may want to re-read
+      // it against the filled fields, or tweak and re-run it.
       handleResult(result, "Couldn't extract details from that — please fill manually.")
     } catch {
       setStatus('error')
@@ -210,18 +206,28 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
     }
   }
 
+  // The single box now accepts a URL/DOI *or* pasted citation text — detectInputType already
+  // returns 'unknown' for anything that isn't a recognisable URL/DOI shape (plain prose included),
+  // so that one check is enough to route to the right one of the two fetches above without asking
+  // the student to pick a mode themselves.
+  function runSmartFill(input: string) {
+    if (!input.trim()) return
+    if (detectInputType(input.trim()) === 'unknown') void runPasteText(input)
+    else void runAutofill(input)
+  }
+
   function handlePaste(e: React.ClipboardEvent<HTMLInputElement>) {
     const pasted = e.clipboardData.getData('text')
     if (!pasted) return
     e.preventDefault()
     setValue(pasted)
-    void runAutofill(pasted)
+    runSmartFill(pasted)
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter') {
       e.preventDefault()
-      void runAutofill(value)
+      runSmartFill(value)
     }
   }
 
@@ -262,102 +268,60 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
     if (aiMessageTimer.current) clearTimeout(aiMessageTimer.current)
     if (resetTimer.current) clearTimeout(resetTimer.current)
     setValue('')
-    setPasteText('')
     setStatus('idle')
     setFeedbackText('')
   }
 
   const isLoading = status === 'loading'
-  const hasAnyInput = value.trim().length > 0 || pasteText.trim().length > 0
-  const canClear = !isLoading && (hasAnyInput || status !== 'idle')
+  const canClear = !isLoading && (value.trim().length > 0 || status !== 'idle')
 
   return (
     <div>
-      {/* Heading and Clear share one row (rather than the heading living in Generator.tsx's wrapping
-          card with Clear on its own row below) so there's only one row of vertical space between
-          "Fill in details automatically" and the URL input, not two. */}
-      <div className="mb-3 flex items-center justify-between gap-2.5">
-        <div className="flex items-center gap-2.5">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-tint text-primary">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3z" />
-              <path d="M19 14l.8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8L19 14z" />
-            </svg>
-          </span>
-          <h2 className="text-[13px] font-bold uppercase tracking-wide text-gray-900">Fill in details automatically</h2>
-        </div>
-        <button
-          type="button"
-          onClick={handleClear}
-          disabled={!canClear}
-          className="shrink-0 text-xs font-medium text-gray-500 hover:text-gray-700 hover:underline disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          Clear
-        </button>
-      </div>
-
-      {/* Option D: URL and paste-details stack in a left column (same width, both action buttons
-          fixed to the same 88px so the two input bars line up), PDF gets its own square drop
-          target on the right sized to match that column's height exactly — see the 84px note on
-          the button below for why that's a hardcoded pixel value rather than an aspect-ratio
-          utility. */}
-      <div className="flex flex-col items-stretch gap-2 sm:flex-row">
-        <div className="flex flex-1 flex-col gap-2">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              onPaste={handlePaste}
-              onKeyDown={handleKeyDown}
-              placeholder="Paste a URL or DOI…"
-              disabled={isLoading}
-              className="w-full rounded-xl border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition-colors focus:border-brand-600 focus:bg-white focus:outline-none focus:shadow-ring-brand disabled:opacity-60"
-            />
+      <div className="flex items-center gap-2">
+        <div className="flex flex-1 items-center gap-2 rounded-full border border-gray-300 bg-gray-50 py-1.5 pl-4 pr-1.5 transition-colors focus-within:border-brand-600 focus-within:bg-white focus-within:shadow-ring-brand">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-gray-400">
+            <path d="M9 15l6-6" />
+            <path d="M11 5l1-1a4 4 0 0 1 6 6l-1 1" />
+            <path d="M13 19l-1 1a4 4 0 0 1-6-6l1-1" />
+          </svg>
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onPaste={handlePaste}
+            onKeyDown={handleKeyDown}
+            placeholder="Paste a URL, DOI, or citation…"
+            disabled={isLoading}
+            className="w-full bg-transparent px-1 py-1 text-sm text-gray-900 outline-none placeholder:text-gray-400 disabled:opacity-60"
+          />
+          {canClear && (
             <button
               type="button"
-              onClick={() => runAutofill(value)}
-              disabled={isLoading || !value.trim()}
-              className="w-[88px] shrink-0 whitespace-nowrap rounded-lg bg-primary px-2 py-2 text-sm font-medium text-white transition-colors hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={handleClear}
+              aria-label="Clear"
+              className="shrink-0 rounded-full p-1 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600"
             >
-              {isLoading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-                  Fill
-                </span>
-              ) : (
-                'Fill ↵'
-              )}
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 6 6 18" />
+                <path d="m6 6 12 12" />
+              </svg>
             </button>
-          </div>
-
-          <div className="flex gap-2">
-            <textarea
-              value={pasteText}
-              onChange={(e) => setPasteText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault()
-                  void runPasteText(pasteText)
-                }
-              }}
-              placeholder={
-                'Or paste the case name, citation, author, title…\n' +
-                'Note: When pasting journal or conference details, Pinpoint tries to match it to a verified record and links that source for you to check.'
-              }
-              rows={4}
-              disabled={isLoading}
-              className="w-full resize-none rounded-xl border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition-colors focus:border-brand-600 focus:bg-white focus:outline-none focus:shadow-ring-brand disabled:opacity-60"
-            />
-            <button
-              type="button"
-              onClick={() => runPasteText(pasteText)}
-              disabled={isLoading || !pasteText.trim()}
-              className="flex w-[88px] shrink-0 items-center justify-center whitespace-nowrap rounded-lg bg-primary px-2 text-sm font-medium text-white transition-colors hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Extract
-            </button>
-          </div>
+          )}
+          <button
+            type="button"
+            onClick={() => runSmartFill(value)}
+            disabled={isLoading || !value.trim()}
+            className="shrink-0 whitespace-nowrap rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                Filling…
+              </span>
+            ) : (
+              'Fill in details'
+            )}
+          </button>
         </div>
 
         <input
@@ -368,14 +332,6 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
           disabled={isLoading}
           className="hidden"
         />
-        {/* Full-width 56px bar below sm (stacked layout, so no fixed square needed). From sm up,
-            a 144px square measured to match the two rows beside it (the 36px URL row, the 8px
-            gap-2, and the paste textarea's own rows={4} height) — `aspect-square` was tried first
-            and doesn't resolve reliably against a flex-stretched cross-size in this layout
-            (confirmed live: it rendered ~41px wide against an 84px-tall stretch), so this is a
-            hardcoded pixel size instead, not a lazier version of the "correct" self-computing
-            approach. Re-measure and update this if the left column's own height ever changes
-            again (eg the textarea's `rows` value) — it will not resize itself. */}
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
@@ -386,25 +342,24 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
           disabled={isLoading}
           aria-label="Upload a PDF"
           title="Upload or drop a PDF — it's read in your browser and never uploaded to our servers"
-          className={`flex h-14 w-full shrink-0 flex-row items-center justify-center gap-1.5 rounded-xl border-2 border-dashed text-center text-xs font-semibold leading-tight transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:h-[144px] sm:w-[144px] sm:flex-col ${
+          className={`flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full border-2 border-dashed transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
             isDraggingFile
               ? 'border-brand-500 bg-brand-100 text-primary'
               : 'border-brand-200 bg-primary-tint text-primary hover:border-brand-400 hover:bg-brand-100'
           }`}
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M12 3v12" />
             <path d="m7 8 5-5 5 5" />
             <path d="M5 21h14" />
           </svg>
-          {isDraggingFile ? 'Drop it here' : 'Upload PDF'}
         </button>
       </div>
 
-      <p className="mt-2 flex items-start gap-1.5 text-sm font-medium text-amber-700">
+      <p className="mt-2.5 flex items-start justify-center gap-1.5 text-center text-xs font-medium text-amber-700">
         <svg
-          width="16"
-          height="16"
+          width="13"
+          height="13"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -415,12 +370,11 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
           <path d="M12 9v4" />
           <path d="M12 17h.01" />
         </svg>
-        Automated extraction can get things wrong — always check the result against the actual source before
-        relying on it.
+        Automated extraction can get things wrong — always check the result before relying on it.
       </p>
 
       {isLoading && (
-        <div className="mt-2 space-y-1">
+        <div className="mt-2 space-y-1 text-center">
           <p className={`text-xs ${loadingMessage === 'Extracting details…' ? 'font-medium text-primary' : 'text-gray-500'}`}>
             {loadingMessage}
           </p>
@@ -429,11 +383,11 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
       )}
 
       {!isLoading && status === 'success' && (
-        <p className="mt-2 text-xs font-medium text-emerald-600">{feedbackText}</p>
+        <p className="mt-2 text-center text-xs font-medium text-emerald-600">{feedbackText}</p>
       )}
 
       {!isLoading && status === 'error' && (
-        <p className="mt-2 text-xs font-medium text-amber-700">{feedbackText}</p>
+        <p className="mt-2 text-center text-xs font-medium text-amber-700">{feedbackText}</p>
       )}
     </div>
   )
