@@ -53,6 +53,14 @@ function TrashIcon() {
   )
 }
 
+function PlusIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  )
+}
+
 function ChevronIcon({ expanded }: { expanded: boolean }) {
   return (
     <svg
@@ -69,20 +77,24 @@ function ChevronIcon({ expanded }: { expanded: boolean }) {
   )
 }
 
-// Small icon button shared by the row-level and expanded-detail copy/delete controls — text is
-// screen-reader-only (aria-label) so the row stays dense, with a native title tooltip for sighted
-// hover users.
+// Small icon button shared by the row-level and expanded-detail copy/delete/collection controls —
+// text is screen-reader-only (aria-label) so the row stays dense, with a native title tooltip for
+// sighted hover users. `tone="blue"` is the resting style for the row's three action buttons
+// (copy/add-to-collection/delete); `active`/`danger` still override it for a state that means
+// something (copied, confirming delete) rather than just "this button exists".
 function IconButton({
   label,
   onClick,
   active,
   danger,
+  tone,
   children,
 }: {
   label: string
   onClick: (e: React.MouseEvent) => void
   active?: boolean
   danger?: boolean
+  tone?: 'blue'
   children: React.ReactNode
 }) {
   return (
@@ -96,7 +108,9 @@ function IconButton({
           ? 'border-emerald-200 bg-emerald-50 text-emerald-600'
           : danger
             ? 'border-red-200 bg-red-50 text-red-600'
-            : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700'
+            : tone === 'blue'
+              ? 'border-brand-200 bg-primary-tint text-primary hover:bg-brand-100'
+              : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700'
       }`}
     >
       {children}
@@ -136,10 +150,25 @@ function DetailPanel({ label, rule, text, html }: { label: string; rule?: string
   )
 }
 
-function CollectionEditor({ citation, onLabelChanged }: { citation: SavedCitation; onLabelChanged: (id: string, label: string | null) => void }) {
+// Triggered by the row's "+" action, not by expanding the row — a dedicated, lightweight way to
+// assign a citation to a collection (new or existing) without pulling up the full citation detail.
+// The <datalist> offers every collection the student already has, so typing a new name and
+// picking an existing one are the same field, not two different controls.
+function CollectionEditor({
+  citation,
+  collectionOptions,
+  onLabelChanged,
+  onClose,
+}: {
+  citation: SavedCitation
+  collectionOptions: string[]
+  onLabelChanged: (id: string, label: string | null) => void
+  onClose: () => void
+}) {
   const [value, setValue] = useState(citation.label ?? '')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const datalistId = `collection-options-${citation.id}`
 
   async function handleSave(e: React.MouseEvent) {
     e.stopPropagation()
@@ -151,22 +180,31 @@ function CollectionEditor({ citation, onLabelChanged }: { citation: SavedCitatio
     if (!error) {
       onLabelChanged(citation.id, trimmed || null)
       setSaved(true)
-      setTimeout(() => setSaved(false), 1500)
+      setTimeout(() => {
+        setSaved(false)
+        onClose()
+      }, 900)
     }
   }
 
   return (
-    <div className="flex items-center gap-2 py-2">
+    <div className="flex items-center gap-2 py-2" onClick={(e) => e.stopPropagation()}>
       <p className="w-32 shrink-0 text-xs font-medium text-gray-500">Collection</p>
       <input
         type="text"
+        list={datalistId}
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        onClick={(e) => e.stopPropagation()}
-        placeholder="eg an assessment name"
+        placeholder="Type new or pick existing"
+        autoFocus
         className="min-w-[180px] flex-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-brand-600 focus:outline-none focus:shadow-ring-brand"
       />
-      <IconButton label="Save collection" onClick={handleSave} active={saved}>
+      <datalist id={datalistId}>
+        {collectionOptions.map((name) => (
+          <option key={name} value={name} />
+        ))}
+      </datalist>
+      <IconButton label="Save collection" onClick={handleSave} active={saved} tone="blue">
         {saving ? <span className="text-[10px]">…</span> : saved ? '✓' : '↵'}
       </IconButton>
     </div>
@@ -176,13 +214,19 @@ function CollectionEditor({ citation, onLabelChanged }: { citation: SavedCitatio
 function CitationRow({
   citation,
   expanded,
+  showCollectionEditor,
+  collectionOptions,
   onToggle,
+  onToggleCollectionEditor,
   onDeleted,
   onLabelChanged,
 }: {
   citation: SavedCitation
   expanded: boolean
+  showCollectionEditor: boolean
+  collectionOptions: string[]
   onToggle: () => void
+  onToggleCollectionEditor: () => void
   onDeleted: (id: string) => void
   onLabelChanged: (id: string, label: string | null) => void
 }) {
@@ -200,6 +244,11 @@ function CitationRow({
       setCopiedBiblio(true)
       setTimeout(() => setCopiedBiblio(false), 1500)
     }
+  }
+
+  function handleToggleCollectionEditor(e: React.MouseEvent) {
+    e.stopPropagation()
+    onToggleCollectionEditor()
   }
 
   async function handleDelete(e: React.MouseEvent) {
@@ -251,13 +300,17 @@ function CitationRow({
         </td>
         <td className="whitespace-nowrap py-2.5 pr-4">
           <div className="flex items-center justify-end gap-1.5">
-            <IconButton label="Copy bibliography" onClick={handleQuickCopy} active={copiedBiblio}>
+            <IconButton label="Copy bibliography" onClick={handleQuickCopy} active={copiedBiblio} tone="blue">
               <CopyIcon />
+            </IconButton>
+            <IconButton label="Add to collection" onClick={handleToggleCollectionEditor} tone="blue">
+              <PlusIcon />
             </IconButton>
             <IconButton
               label={confirmingDelete ? 'Confirm delete' : 'Delete'}
               onClick={handleDelete}
               danger={confirmingDelete}
+              tone="blue"
             >
               {deleting ? <span className="text-[10px]">…</span> : <TrashIcon />}
             </IconButton>
@@ -265,6 +318,18 @@ function CitationRow({
           </div>
         </td>
       </tr>
+      {showCollectionEditor && (
+        <tr className="border-b border-gray-200 bg-primary-tint last:border-0">
+          <td colSpan={4} className="px-4 py-1">
+            <CollectionEditor
+              citation={citation}
+              collectionOptions={collectionOptions}
+              onLabelChanged={onLabelChanged}
+              onClose={onToggleCollectionEditor}
+            />
+          </td>
+        </tr>
+      )}
       {expanded && (
         <tr className="border-b border-gray-200 bg-gray-50 last:border-0">
           <td colSpan={4} className="px-4 py-1">
@@ -274,7 +339,6 @@ function CitationRow({
                 <DetailPanel label="Subsequent reference" text={citation.subsequent_text} html={null} />
               )}
               <DetailPanel label="Bibliography entry" text={citation.bibliography_text} html={citation.bibliography_html} />
-              <CollectionEditor citation={citation} onLabelChanged={onLabelChanged} />
             </div>
           </td>
         </tr>
@@ -291,6 +355,7 @@ export default function LibraryClient({ userId }: { userId: string }) {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
   const [collectionFilter, setCollectionFilter] = useState<string>('all')
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [collectionEditorId, setCollectionEditorId] = useState<string | null>(null)
 
   useEffect(() => {
     const supabase = createClient()
@@ -339,6 +404,7 @@ export default function LibraryClient({ userId }: { userId: string }) {
   function handleDeleted(id: string) {
     setCitations((prev) => prev.filter((c) => c.id !== id))
     setExpandedId((current) => (current === id ? null : current))
+    setCollectionEditorId((current) => (current === id ? null : current))
   }
 
   function handleLabelChanged(id: string, label: string | null) {
@@ -467,7 +533,12 @@ export default function LibraryClient({ userId }: { userId: string }) {
                   key={citation.id}
                   citation={citation}
                   expanded={expandedId === citation.id}
+                  showCollectionEditor={collectionEditorId === citation.id}
+                  collectionOptions={collections.names}
                   onToggle={() => setExpandedId((current) => (current === citation.id ? null : citation.id))}
+                  onToggleCollectionEditor={() =>
+                    setCollectionEditorId((current) => (current === citation.id ? null : citation.id))
+                  }
                   onDeleted={handleDeleted}
                   onLabelChanged={handleLabelChanged}
                 />
