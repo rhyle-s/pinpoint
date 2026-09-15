@@ -24,6 +24,7 @@ const SavePayloadSchema = z.object({
   subsequentText: z.string(),
   footnoteHtml: z.string(),
   bibliographyHtml: z.string(),
+  label: z.string().trim().min(1).max(200).nullish(),
 })
 
 export async function POST(request: NextRequest) {
@@ -61,6 +62,7 @@ export async function POST(request: NextRequest) {
       subsequent_text: payload.subsequentText,
       footnote_html: payload.footnoteHtml,
       bibliography_html: payload.bibliographyHtml,
+      label: payload.label ?? null,
     })
     .select('id')
     .single()

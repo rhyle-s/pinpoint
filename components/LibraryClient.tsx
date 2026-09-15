@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { formatItalics } from '@/lib/citation-engine'
 import { SourceType } from '@/lib/citation-engine/types'
-import { SOURCE_TYPE_LABELS, SOURCE_TYPE_PILL_CLASSES, SavedCitation } from '@/lib/library-types'
+import { SOURCE_TYPE_LABELS, SOURCE_TYPE_PILL_CLASSES, SavedCitation, UNCATEGORISED_COLLECTION } from '@/lib/library-types'
 import { createClient } from '@/lib/supabase/client'
 
 type SortOption = 'newest' | 'oldest' | 'type-az'
@@ -136,16 +136,55 @@ function DetailPanel({ label, rule, text, html }: { label: string; rule?: string
   )
 }
 
+function CollectionEditor({ citation, onLabelChanged }: { citation: SavedCitation; onLabelChanged: (id: string, label: string | null) => void }) {
+  const [value, setValue] = useState(citation.label ?? '')
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  async function handleSave(e: React.MouseEvent) {
+    e.stopPropagation()
+    setSaving(true)
+    const trimmed = value.trim()
+    const supabase = createClient()
+    const { error } = await supabase.from('citations').update({ label: trimmed || null }).eq('id', citation.id)
+    setSaving(false)
+    if (!error) {
+      onLabelChanged(citation.id, trimmed || null)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 1500)
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-2 py-2">
+      <p className="w-32 shrink-0 text-xs font-medium text-gray-500">Collection</p>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onClick={(e) => e.stopPropagation()}
+        placeholder="eg an assessment name"
+        className="min-w-[180px] flex-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-brand-600 focus:outline-none focus:shadow-ring-brand"
+      />
+      <IconButton label="Save collection" onClick={handleSave} active={saved}>
+        {saving ? <span className="text-[10px]">…</span> : saved ? '✓' : '↵'}
+      </IconButton>
+    </div>
+  )
+}
+
 function CitationRow({
   citation,
   expanded,
   onToggle,
   onDeleted,
+  onLabelChanged,
 }: {
   citation: SavedCitation
   expanded: boolean
   onToggle: () => void
   onDeleted: (id: string) => void
+  onLabelChanged: (id: string, label: string | null) => void
 }) {
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [copiedBiblio, setCopiedBiblio] = useState(false)
@@ -185,11 +224,18 @@ function CitationRow({
     <>
       <tr onClick={onToggle} className="cursor-pointer border-b border-gray-200 last:border-0 hover:bg-gray-50">
         <td className="whitespace-nowrap py-2.5 pl-4 pr-3">
-          <span
-            className={`inline-flex w-fit items-center rounded-full px-2 py-0.5 text-xs font-medium ${SOURCE_TYPE_PILL_CLASSES[citation.source_type]}`}
-          >
-            {SOURCE_TYPE_LABELS[citation.source_type]}
-          </span>
+          <div className="flex flex-wrap items-center gap-1">
+            <span
+              className={`inline-flex w-fit items-center rounded-full px-2 py-0.5 text-xs font-medium ${SOURCE_TYPE_PILL_CLASSES[citation.source_type]}`}
+            >
+              {SOURCE_TYPE_LABELS[citation.source_type]}
+            </span>
+            {citation.label && (
+              <span className="inline-flex w-fit items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
+                {citation.label}
+              </span>
+            )}
+          </div>
         </td>
         <td className="max-w-0 w-full py-2.5 pr-3">
           <p
@@ -228,6 +274,7 @@ function CitationRow({
                 <DetailPanel label="Subsequent reference" text={citation.subsequent_text} html={null} />
               )}
               <DetailPanel label="Bibliography entry" text={citation.bibliography_text} html={citation.bibliography_html} />
+              <CollectionEditor citation={citation} onLabelChanged={onLabelChanged} />
             </div>
           </td>
         </tr>
@@ -242,6 +289,7 @@ export default function LibraryClient({ userId }: { userId: string }) {
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<SortOption>('newest')
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
+  const [collectionFilter, setCollectionFilter] = useState<string>('all')
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -293,10 +341,30 @@ export default function LibraryClient({ userId }: { userId: string }) {
     setExpandedId((current) => (current === id ? null : current))
   }
 
+  function handleLabelChanged(id: string, label: string | null) {
+    setCitations((prev) => prev.map((c) => (c.id === id ? { ...c, label } : c)))
+  }
+
+  // Distinct collection names actually present, alphabetised — drives both the filter dropdown's
+  // options and whether "Uncategorised" is worth offering at all (only if some citation has no
+  // label yet).
+  const collections = useMemo(() => {
+    const names = new Set<string>()
+    let hasUncategorised = false
+    for (const c of citations) {
+      if (c.label) names.add(c.label)
+      else hasUncategorised = true
+    }
+    return { names: Array.from(names).sort((a, b) => a.localeCompare(b)), hasUncategorised }
+  }, [citations])
+
   const visibleCitations = useMemo(() => {
     const query = search.trim().toLowerCase()
     let list = citations.filter((c) => {
       if (typeFilter !== 'all' && c.source_type !== typeFilter) return false
+      if (collectionFilter === UNCATEGORISED_COLLECTION && c.label) return false
+      if (collectionFilter !== 'all' && collectionFilter !== UNCATEGORISED_COLLECTION && c.label !== collectionFilter)
+        return false
       if (!query) return true
       return c.footnote_text.toLowerCase().includes(query) || c.bibliography_text.toLowerCase().includes(query)
     })
@@ -308,7 +376,7 @@ export default function LibraryClient({ userId }: { userId: string }) {
     })
 
     return list
-  }, [citations, search, sort, typeFilter])
+  }, [citations, search, sort, typeFilter, collectionFilter])
 
   if (loading) {
     return <p className="text-sm text-gray-500">Loading your library…</p>
@@ -345,8 +413,23 @@ export default function LibraryClient({ userId }: { userId: string }) {
             </option>
           ))}
         </select>
+        {(collections.names.length > 0 || collections.hasUncategorised) && (
+          <select
+            value={collectionFilter}
+            onChange={(e) => setCollectionFilter(e.target.value)}
+            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-600 focus:outline-none focus:shadow-ring-brand"
+          >
+            <option value="all">All collections</option>
+            {collections.names.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+            {collections.hasUncategorised && <option value={UNCATEGORISED_COLLECTION}>Uncategorised</option>}
+          </select>
+        )}
         <a
-          href="/api/library/export"
+          href={collectionFilter === 'all' ? '/api/library/export' : `/api/library/export?collection=${encodeURIComponent(collectionFilter)}`}
           className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#1D4ED8]"
         >
           Export bibliography (.docx)
@@ -386,6 +469,7 @@ export default function LibraryClient({ userId }: { userId: string }) {
                   expanded={expandedId === citation.id}
                   onToggle={() => setExpandedId((current) => (current === citation.id ? null : citation.id))}
                   onDeleted={handleDeleted}
+                  onLabelChanged={handleLabelChanged}
                 />
               ))}
             </tbody>

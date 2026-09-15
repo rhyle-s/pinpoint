@@ -25,6 +25,10 @@ export interface SaveCitationPayload {
   subsequentText: string
   footnoteHtml: string
   bibliographyHtml: string
+  // Free-text grouping (eg an assessment name) — the `label` column already existed in the schema
+  // reserved for this, unused until now. Optional: citations saved before this feature, or without
+  // one entered, have label null and show up under "Uncategorised" in the Library page.
+  label?: string | null
 }
 
 // Same labels SourceTypeSelector.tsx uses — duplicated rather than imported from there so the
@@ -42,6 +46,11 @@ export const SOURCE_TYPE_LABELS: Record<SourceType, string> = {
   internationalMaterial: 'International Material',
   otherSources: 'Other Sources',
 }
+
+// Sentinel value for "citations with no collection assigned" — used as a ?collection= query value
+// (can't express "label IS NULL" as a literal label string) and as the matching <select> option
+// value in LibraryClient's collection filter, so both sides agree on the same string.
+export const UNCATEGORISED_COLLECTION = '__uncategorised__'
 
 // Tailwind class pairs (bg/text) for the source-type pill on each library card — one per
 // SourceType, not the fictional 8-category list from the original feature spec.

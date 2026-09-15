@@ -1,6 +1,13 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { Document, HeadingLevel, Packer, Paragraph, TextRun } from 'docx'
 import { createClient } from '@/lib/supabase/server'
+import { CitationFields, SourceType } from '@/lib/citation-engine/types'
+import {
+  BIBLIOGRAPHY_SECTION_LABELS,
+  BIBLIOGRAPHY_SECTION_ORDER,
+  bibliographySectionFor,
+} from '@/lib/library-bibliography-sections'
+import { UNCATEGORISED_COLLECTION } from '@/lib/library-types'
 
 const CITATION_FONT = 'Times New Roman'
 const CITATION_FONT_SIZE = 24 // half-points — 12pt
@@ -28,7 +35,7 @@ function parseItalicsToRuns(text: string): TextRun[] {
     )
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const supabase = await createClient()
   const {
     data: { user },
@@ -38,29 +45,59 @@ export async function GET() {
     return NextResponse.json({ error: 'Sign in to export your bibliography.' }, { status: 401 })
   }
 
-  const { data: citations, error } = await supabase
-    .from('citations')
-    .select('bibliography_text')
-    .eq('user_id', user.id)
+  // Optional ?collection=<label> scopes the export to one collection (eg one assessment) instead
+  // of the whole library — the Library page's export link passes this through when a collection
+  // filter is active there, so "export just this assessment" and "export everything" are the same
+  // endpoint with/without the param, not two separate routes.
+  const collection = request.nextUrl.searchParams.get('collection')
+
+  let query = supabase.from('citations').select('source_type, fields, bibliography_text').eq('user_id', user.id)
+  if (collection === UNCATEGORISED_COLLECTION) query = query.is('label', null)
+  else if (collection) query = query.eq('label', collection)
+
+  const { data: citations, error } = await query
 
   if (error) {
     return NextResponse.json({ error: "Couldn't load your library — please try again." }, { status: 500 })
   }
 
-  const sorted = [...(citations ?? [])].sort((a, b) =>
-    sortKey(a.bibliography_text).localeCompare(sortKey(b.bibliography_text)),
-  )
+  const rows = (citations ?? []) as { source_type: SourceType; fields: CitationFields; bibliography_text: string }[]
 
-  const entryParagraphs =
-    sorted.length > 0
-      ? sorted.map(
-          (citation) =>
-            new Paragraph({
-              children: parseItalicsToRuns(citation.bibliography_text),
-              indent: { left: 720, hanging: 720 }, // 0.5in hanging indent — standard bibliography format
-              spacing: { after: 200 },
-            }),
-        )
+  // AGLC4 r 1.13: a bibliography is divided into lettered sections by source type, each entry
+  // alphabetised within its own section (not across the whole document) — 'A' cases and 'B' cases
+  // sort independently, so a Case-section entry starting with the same word as an unrelated
+  // Legislation-section entry never interleaves with it.
+  const sectionParagraphs = BIBLIOGRAPHY_SECTION_ORDER.flatMap((section) => {
+    const entries = rows
+      .filter((row) => bibliographySectionFor(row.source_type, row.fields) === section)
+      .sort((a, b) => sortKey(a.bibliography_text).localeCompare(sortKey(b.bibliography_text)))
+
+    if (entries.length === 0) return []
+
+    return [
+      new Paragraph({
+        // Only the section name is italicised, per AGLC4's own r 1.13 heading style — the letter
+        // itself stays roman.
+        children: [
+          new TextRun({ text: `${section} `, bold: true, size: CITATION_FONT_SIZE + 2 }),
+          new TextRun({ text: BIBLIOGRAPHY_SECTION_LABELS[section], italics: true, bold: true, size: CITATION_FONT_SIZE + 2 }),
+        ],
+        spacing: { before: 300, after: 200 },
+      }),
+      ...entries.map(
+        (entry) =>
+          new Paragraph({
+            children: parseItalicsToRuns(entry.bibliography_text),
+            indent: { left: 720, hanging: 720 }, // 0.5in hanging indent — standard bibliography format
+            spacing: { after: 200 },
+          }),
+      ),
+    ]
+  })
+
+  const bodyParagraphs =
+    sectionParagraphs.length > 0
+      ? sectionParagraphs
       : [
           new Paragraph({
             children: [new TextRun({ text: 'No citations saved yet.', font: CITATION_FONT, size: CITATION_FONT_SIZE })],
@@ -72,7 +109,7 @@ export async function GET() {
       {
         children: [
           new Paragraph({ text: 'Bibliography', heading: HeadingLevel.HEADING_1, spacing: { after: 300 } }),
-          ...entryParagraphs,
+          ...bodyParagraphs,
         ],
       },
     ],

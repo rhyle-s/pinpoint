@@ -49,7 +49,7 @@ create table public.citations (
   subsequent_text text,
   footnote_html text,
   bibliography_html text,
-  label text, -- optional user-defined label; not surfaced in the UI yet, reserved for later
+  label text, -- free-text "collection" (eg an assessment name) — set at save time or renamed later
   created_at timestamptz not null default now()
 );
 
@@ -67,8 +67,15 @@ create policy "Users can delete own citations"
   on public.citations for delete
   using (auth.uid() = user_id);
 
--- No update policy: citations are write-once/delete, never edited in place — the app always
--- generates a fresh one and saves a new row rather than mutating a saved entry.
+-- Citations are otherwise write-once/delete (the app always generates a fresh one rather than
+-- mutating a saved entry's citation text) — this update policy exists only so `label` (the
+-- collection a citation is filed under) can be renamed after saving. Nothing in the app UI edits
+-- any other column post-insert; RLS itself doesn't restrict *which* column an update touches, just
+-- who can touch their own row, the same as the existing select/delete policies.
+create policy "Users can update own citations"
+  on public.citations for update
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
 
 create index citations_user_id_created_at
   on public.citations(user_id, created_at desc);
