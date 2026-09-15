@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getCitationTitle } from './citation-title'
+import { getCitationAuthor, getCitationTitle } from './citation-title'
 
 describe('getCitationTitle', () => {
   it('case -> caseName', () => {
@@ -80,5 +80,64 @@ describe('getCitationTitle', () => {
     expect(
       getCitationTitle('otherSources', { subtype: 'legalEncyclopedia', encyclopediaTitle: 'An Encyclopedia' } as never),
     ).toBe(undefined)
+  })
+})
+
+describe('getCitationAuthor', () => {
+  it('case, legislation, internationalMaterial -> undefined (no author-shaped field)', () => {
+    expect(getCitationAuthor('case', { caseName: 'Mabo v Queensland [No 2]' } as never)).toBe(undefined)
+    expect(getCitationAuthor('legislation', { actTitle: 'Native Title Act 1993' } as never)).toBe(undefined)
+    expect(getCitationAuthor('internationalMaterial', { subtype: 'treaty', title: 'A Treaty' } as never)).toBe(undefined)
+  })
+
+  it('journal -> first author', () => {
+    expect(getCitationAuthor('journal', { authors: ['RJ Ellicott', 'Jane Smith'] } as never)).toBe('RJ Ellicott')
+  })
+
+  it('book: whole book -> authors[0], chapter -> chapterAuthors[0]', () => {
+    expect(getCitationAuthor('book', { bookType: 'book', authors: ['Catharine MacMillan'] } as never)).toBe(
+      'Catharine MacMillan',
+    )
+    expect(
+      getCitationAuthor('book', {
+        bookType: 'chapter',
+        chapterAuthors: ['A Chapter Author'],
+        authors: ['A Book Author'],
+      } as never),
+    ).toBe('A Chapter Author')
+    expect(getCitationAuthor('book', { bookType: 'book' } as never)).toBe(undefined)
+  })
+
+  it('report, researchPaper, website, newspaper -> authors[0], undefined when omitted', () => {
+    expect(getCitationAuthor('report', { authors: ['Australian Law Reform Commission'] } as never)).toBe(
+      'Australian Law Reform Commission',
+    )
+    expect(getCitationAuthor('report', {} as never)).toBe(undefined)
+    expect(getCitationAuthor('researchPaper', { authors: ['Henry Fraser'] } as never)).toBe('Henry Fraser')
+    expect(getCitationAuthor('website', { authors: ['James Edelman'] } as never)).toBe('James Edelman')
+    expect(getCitationAuthor('newspaper', { authors: ['Isobel Roe'] } as never)).toBe('Isobel Roe')
+  })
+
+  it('otherLegislativeMaterial: gazette -> gazetteAuthor, every other subtype -> undefined', () => {
+    expect(getCitationAuthor('otherLegislativeMaterial', { subtype: 'gazette', gazetteAuthor: 'Minister for Lands (WA)' } as never)).toBe(
+      'Minister for Lands (WA)',
+    )
+    expect(getCitationAuthor('otherLegislativeMaterial', { subtype: 'bill', billTitle: 'A Bill' } as never)).toBe(undefined)
+  })
+
+  it('otherSources: speech/pressRelease -> their own author field, abs -> the fixed ABS string, everything else undefined', () => {
+    expect(getCitationAuthor('otherSources', { subtype: 'speech', speechAuthor: 'James Edelman' } as never)).toBe(
+      'James Edelman',
+    )
+    expect(
+      getCitationAuthor('otherSources', { subtype: 'pressRelease', pressReleaseAuthor: 'Attorney-General' } as never),
+    ).toBe('Attorney-General')
+    expect(getCitationAuthor('otherSources', { subtype: 'abs', absTitle: 'ABS Stats' } as never)).toBe(
+      'Australian Bureau of Statistics',
+    )
+    expect(getCitationAuthor('otherSources', { subtype: 'filmOrMedia', mediaTitle: 'A Film' } as never)).toBe(undefined)
+    expect(getCitationAuthor('otherSources', { subtype: 'dictionary', dictionaryTitle: 'A Dictionary' } as never)).toBe(
+      undefined,
+    )
   })
 })

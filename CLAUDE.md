@@ -511,6 +511,21 @@ reachable by reverting these commits.
   whenever the library has *any* citations, regardless of what the current filter combo turns up.
   "Your saved AGLC4 citations" also darkened from `text-gray-500` to `text-sm font-medium text-gray-600`
   per the same "make X more prominent" pattern used elsewhere this session.
+- **Library sort gained Author (A–Z/Z–A) and Title (A–Z/Z–A)**, alongside the existing Date added/
+  Source type options. New `getCitationAuthor(sourceType, fields)` in `lib/citation-title.ts`
+  (own test file, alongside `getCitationTitle`, which already existed there for duplicate-detection
+  and now also backs the Title sort) — returns the first author exactly as the student entered it
+  (eg `'RJ Ellicott'`), not a surname-first inversion: that inversion only exists inside the citation
+  engine's own per-type bibliography formatters (`formatBibliographyAuthorList`), keyed to each type's
+  own `fields.authors`, not exposed as a single shared string this file could reuse. Only the source
+  types with an author-shaped field return one (journal, book, report, researchPaper, website,
+  newspaper, otherLegislativeMaterial's gazette subtype via `gazetteAuthor`, otherSources' speech/
+  pressRelease subtypes, and `abs` — a fixed `'Australian Bureau of Statistics'` string per r 7.1.5,
+  not a stored field); everything else (cases, legislation, treaties, most otherSources subtypes) has
+  no natural author and returns `undefined`. Both new sorts fall back through `getCitationAuthor` →
+  `getCitationTitle` → `bibliography_text` (`sortableAuthor`/`sortableTitle` helpers in
+  `LibraryClient.tsx`) so every row has some sortable string — no separate "no author" bucket that
+  would land inconsistently between the A–Z and Z–A directions.
 
 ## Deployment
 

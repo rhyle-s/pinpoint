@@ -4,12 +4,24 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { formatItalics } from '@/lib/citation-engine'
 import { SourceType } from '@/lib/citation-engine/types'
 import { SOURCE_TYPE_LABELS, SOURCE_TYPE_PILL_CLASSES, SavedCitation, UNCATEGORISED_COLLECTION } from '@/lib/library-types'
+import { getCitationAuthor, getCitationTitle } from '@/lib/citation-title'
 import { createClient } from '@/lib/supabase/client'
 
-type SortOption = 'newest' | 'oldest' | 'type-az'
+type SortOption = 'newest' | 'oldest' | 'type-az' | 'author-az' | 'author-za' | 'title-az' | 'title-za'
 type TypeFilter = 'all' | SourceType
 
 const DATE_FORMAT = new Intl.DateTimeFormat('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })
+
+// Falls back to the citation's own title (and, failing that, its full bibliography text) whenever
+// there's no author-shaped field for this source type/subtype — every row needs some sortable
+// string for the two author sorts, not a separate "no author" bucket that behaves inconsistently
+// between A–Z and Z–A.
+function sortableTitle(c: SavedCitation): string {
+  return getCitationTitle(c.source_type, c.fields) ?? c.bibliography_text
+}
+function sortableAuthor(c: SavedCitation): string {
+  return getCitationAuthor(c.source_type, c.fields) ?? sortableTitle(c)
+}
 
 // Sentinel <option> value for "+ Create new collection…" in CollectionEditor's dropdown — distinct
 // from a real collection name (which could theoretically collide with a literal string otherwise).
@@ -880,9 +892,22 @@ export default function LibraryClient({ userId }: { userId: string }) {
     })
 
     list = [...list].sort((a, b) => {
-      if (sort === 'newest') return b.created_at.localeCompare(a.created_at)
-      if (sort === 'oldest') return a.created_at.localeCompare(b.created_at)
-      return SOURCE_TYPE_LABELS[a.source_type].localeCompare(SOURCE_TYPE_LABELS[b.source_type])
+      switch (sort) {
+        case 'newest':
+          return b.created_at.localeCompare(a.created_at)
+        case 'oldest':
+          return a.created_at.localeCompare(b.created_at)
+        case 'type-az':
+          return SOURCE_TYPE_LABELS[a.source_type].localeCompare(SOURCE_TYPE_LABELS[b.source_type])
+        case 'author-az':
+          return sortableAuthor(a).localeCompare(sortableAuthor(b))
+        case 'author-za':
+          return sortableAuthor(b).localeCompare(sortableAuthor(a))
+        case 'title-az':
+          return sortableTitle(a).localeCompare(sortableTitle(b))
+        case 'title-za':
+          return sortableTitle(b).localeCompare(sortableTitle(a))
+      }
     })
 
     return list
@@ -1150,6 +1175,10 @@ export default function LibraryClient({ userId }: { userId: string }) {
               <option value="newest">Date added (newest)</option>
               <option value="oldest">Date added (oldest)</option>
               <option value="type-az">Source type (A–Z)</option>
+              <option value="author-az">Author (A–Z)</option>
+              <option value="author-za">Author (Z–A)</option>
+              <option value="title-az">Title (A–Z)</option>
+              <option value="title-za">Title (Z–A)</option>
             </select>
           </div>
         )}

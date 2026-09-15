@@ -15,13 +15,13 @@ import {
 } from '@/lib/citation-engine/types'
 
 /**
- * Extracts "the title" of a source from its saved fields, for duplicate-detection purposes — not
- * used anywhere in the citation engine itself. Every source type names its title field
- * differently (caseName, actTitle, articleTitle, documentTitle, ...), and a few (otherLegislativeMaterial,
- * otherSources) are umbrella types where the right field also depends on the subtype. Returns
- * undefined for the handful of otherSources subtypes with no single clean title field (dictionary
- * entries, legal encyclopedia chapters) — callers should treat that as "can't reliably say", not
- * silently fall back to something looser.
+ * Extracts "the title" of a source from its saved fields — used for duplicate-detection and for
+ * the Library page's "Title (A–Z)" sort, not anywhere in the citation engine itself. Every source
+ * type names its title field differently (caseName, actTitle, articleTitle, documentTitle, ...),
+ * and a few (otherLegislativeMaterial, otherSources) are umbrella types where the right field also
+ * depends on the subtype. Returns undefined for the handful of otherSources subtypes with no single
+ * clean title field (dictionary entries, legal encyclopedia chapters) — callers should treat that
+ * as "can't reliably say", not silently fall back to something looser.
  */
 export function getCitationTitle(sourceType: SourceType, fields: CitationFields): string | undefined {
   switch (sourceType) {
@@ -80,6 +80,55 @@ export function getCitationTitle(sourceType: SourceType, fields: CitationFields)
           return f.socialMediaTitle || f.socialMediaUsername
         case 'dictionary':
         case 'legalEncyclopedia':
+        default:
+          return undefined
+      }
+    }
+    default:
+      return undefined
+  }
+}
+
+/**
+ * Extracts the first author's name, exactly as the student entered it (eg 'RJ Ellicott', not a
+ * surname-first inversion — that formatting only exists inside the citation engine's own
+ * bibliography formatters, keyed per source type, not as a shared string usable here) — for the
+ * Library page's "Author (A–Z)" sort. Only the source types that actually have an author-shaped
+ * field return one; everything else (cases, legislation, treaties, and most otherSources/
+ * otherLegislativeMaterial subtypes) has no natural "author" and returns undefined, same convention
+ * as getCitationTitle above.
+ */
+export function getCitationAuthor(sourceType: SourceType, fields: CitationFields): string | undefined {
+  switch (sourceType) {
+    case 'journal':
+      return (fields as JournalFields).authors[0]
+    case 'book': {
+      const f = fields as BookFields
+      return (f.bookType === 'chapter' ? f.chapterAuthors : f.authors)?.[0]
+    }
+    case 'report':
+      return (fields as ReportFields).authors?.[0]
+    case 'researchPaper':
+      return (fields as ResearchPaperFields).authors?.[0]
+    case 'website':
+      return (fields as WebsiteFields).authors?.[0]
+    case 'newspaper':
+      return (fields as NewspaperFields).authors?.[0]
+    case 'otherLegislativeMaterial': {
+      const f = fields as OtherLegislativeMaterialFields
+      return f.subtype === 'gazette' ? f.gazetteAuthor : undefined
+    }
+    case 'otherSources': {
+      const f = fields as OtherSourcesFields
+      switch (f.subtype) {
+        case 'speech':
+          return f.speechAuthor
+        case 'pressRelease':
+          return f.pressReleaseAuthor
+        // Not a student-entered field — r 7.1.5 fixes the author as this literal string, so
+        // generate.ts never asks for one (see OtherSourcesFields.absTitle's own comment).
+        case 'abs':
+          return 'Australian Bureau of Statistics'
         default:
           return undefined
       }
