@@ -290,7 +290,7 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
             onChange={(e) => setValue(e.target.value)}
             onPaste={handlePaste}
             onKeyDown={handleKeyDown}
-            placeholder="Paste a URL, DOI, or citation…"
+            placeholder="Paste a URL, DOI, or any known details…"
             disabled={isLoading}
             className="w-full bg-transparent px-1 py-1 text-sm text-gray-900 outline-none placeholder:text-gray-400 disabled:opacity-60"
           />
@@ -332,28 +332,34 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
           disabled={isLoading}
           className="hidden"
         />
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          onDragEnter={handleDragEnter}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          disabled={isLoading}
-          aria-label="Upload a PDF"
-          title="Upload or drop a PDF — it's read in your browser and never uploaded to our servers"
-          className={`flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full border-2 border-dashed transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-            isDraggingFile
-              ? 'border-brand-500 bg-brand-100 text-primary'
-              : 'border-brand-200 bg-primary-tint text-primary hover:border-brand-400 hover:bg-brand-100'
-          }`}
-        >
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M12 3v12" />
-            <path d="m7 8 5-5 5 5" />
-            <path d="M5 21h14" />
-          </svg>
-        </button>
+        {/* A hover title alone doesn't say what this circle does at a glance (and does nothing on
+            touch) — the small "PDF" label underneath is the always-visible version of the same
+            explanation. */}
+        <div className="flex flex-col items-center gap-1">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            onDragEnter={handleDragEnter}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            disabled={isLoading}
+            aria-label="Upload a PDF"
+            title="Upload or drop a PDF — it's read in your browser and never uploaded to our servers"
+            className={`flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full border-2 border-dashed transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+              isDraggingFile
+                ? 'border-brand-500 bg-brand-100 text-primary'
+                : 'border-brand-200 bg-primary-tint text-primary hover:border-brand-400 hover:bg-brand-100'
+            }`}
+          >
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 3v12" />
+              <path d="m7 8 5-5 5 5" />
+              <path d="M5 21h14" />
+            </svg>
+          </button>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">PDF</span>
+        </div>
       </div>
 
       <p className="mt-2.5 flex items-start justify-center gap-1.5 text-center text-xs font-medium text-amber-700">

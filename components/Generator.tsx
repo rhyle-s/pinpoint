@@ -633,9 +633,7 @@ export default function Generator({ initialSourceType }: GeneratorProps) {
 
   return (
     <div className="space-y-6">
-      <div className="mx-auto max-w-2xl">
-        <AutofillBar onAutofill={handleAutofill} onLoadingChange={setAutofillLoading} />
-      </div>
+      <AutofillBar onAutofill={handleAutofill} onLoadingChange={setAutofillLoading} />
 
       {autofillNotice && (
         <div className="flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm">

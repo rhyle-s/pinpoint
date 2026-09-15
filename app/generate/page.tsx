@@ -30,8 +30,8 @@ export default function GeneratePage({ searchParams }: { searchParams: { type?: 
           Citation Generator
         </h1>
         <p className="mt-3 text-[15px] leading-relaxed text-gray-600">
-          Choose a source type and add the details — by hand, or autofilled from a link, DOI, citation, or PDF —
-          then copy the footnote citation, subsequent reference, and bibliography entry.
+          Paste a link/URL, DOI, or any known details — or upload a PDF — then copy the footnote citation,
+          subsequent reference, and bibliography entry.
         </p>
         <div className="mt-5 flex flex-wrap justify-center gap-x-6 gap-y-3">
           <div className="flex items-center gap-2">

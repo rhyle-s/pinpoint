@@ -623,6 +623,20 @@ collapses two genuinely different code paths into one.
   not a code issue: `handleKeyDown`'s `if (e.key === 'Enter')` check is the exact same idiom the
   pre-existing code already used, unchanged by this round, and the button-click path — which calls the
   identical `runSmartFill` — is fully verified.
+- **CTA pill widened, copy tweaked, PDF button made clearer.** The pill's `mx-auto max-w-2xl` wrapper
+  (`Generator.tsx`) is gone — it now spans the full page width like everything below it, rather than
+  matching the header's narrower reading-width column. Placeholder text: `'Paste a URL, DOI, or
+  citation…'` → `'Paste a URL, DOI, or any known details…'`. The page subtitle (`app/generate/
+  page.tsx`) changed from describing the *form-filling* mechanism to describing what pasting into the
+  new pill actually does: `'Paste a link/URL, DOI, or any known details — or upload a PDF — then copy
+  the footnote citation, subsequent reference, and bibliography entry.'` — the tail deliberately
+  reuses this app's own pre-existing "then copy the footnote citation, subsequent reference, and
+  bibliography entry" phrasing (the outcome) rather than a first draft ending in "...and Pinpoint
+  fills in the details for you" that the user felt read oddly self-referential.
+- **PDF button clarity**: a hover-only `title` tooltip doesn't communicate anything at a glance (and
+  nothing at all on touch), so `AutofillBar.tsx`'s circular PDF button gained an always-visible small
+  "PDF" caption underneath it — same button/handlers, just no longer relying on hover to say what it's
+  for.
 
 ## Deployment
 
