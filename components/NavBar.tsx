@@ -8,7 +8,7 @@ import Logo from './Logo'
 
 const TABS = [
   { label: 'Generate', href: '/generate', active: true },
-  { label: 'Checker', href: '#', active: false },
+  { label: 'Checker', href: '/checker', active: true },
   { label: 'Library', href: '/library', active: true },
   { label: 'Guide', href: '/guide', active: true },
 ]

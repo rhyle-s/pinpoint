@@ -664,6 +664,41 @@ collapses two genuinely different code paths into one.
   classes those other cards use), with `focus-within:bg-white` dropped since it's already white; the
   border-colour-on-focus and ring-glow behaviour are untouched.
 
+## AGLC4 Citation Checker
+
+The nav's "Checker" tab (disabled/"Coming soon" since before this feature existed) now links to
+`/checker` — a page where a student pastes a citation *they already wrote* (not one Pinpoint
+generated) and the app checks it against AGLC4, flags issues, and suggests a fix. No auth required
+(matches `/generate`'s open pattern), no library save (a check doesn't produce a structured `fields`
+object the way generation does), single citation only, not a whole document.
+
+- **`validateCitation()` (in `validator.ts`) is not reusable for this** — it requires all three
+  already-generated text forms (footnote/subsequent/bibliography) simultaneously, *plus* a known,
+  trusted `fields` object the prompt explicitly tells the model to treat as ground truth. The Checker
+  has neither: just one arbitrary string a student wrote, with one form at a time. So this is a
+  genuinely new function, `checkCitation()` (in the new `lib/citation-engine/checker.ts`), with its
+  own prompt telling the model never to invent facts to fill perceived gaps and never flag a
+  legitimately-absent element as missing — only flag genuine formatting/punctuation/structure errors.
+- **`lib/citation-engine/aglc4-rules.ts` (new)** — `RULES_BY_SOURCE_TYPE`, `BIBLIOGRAPHY_RULE`, and
+  `SUBSEQUENT_RULE` moved out of `validator.ts` into their own file, verbatim, so both `validator.ts`
+  and `checker.ts` can import the same domain-knowledge constants without either file owning the
+  other. Zero behaviour change to `validator.ts` itself.
+- **Source type and citation form (footnote/subsequent/bibliography) are picked by the student**, via
+  `SourceTypeSelector` (the same dropdown `Generator.tsx` uses) and a pill switcher — not AI-guessed.
+  A single short citation string doesn't carry enough signal for reliable 11-way source-type
+  classification on its own. **Subtype** (eg Bill vs Constitution within `otherLegislativeMaterial`)
+  *is* left for the AI to infer from the citation's own shape — `RULES_BY_SOURCE_TYPE`'s text is
+  already written to support exactly that, and live-testing confirmed it: a wrongly-italicised Bill
+  citation was correctly identified as a Bill (not an Act) and flagged against r 3.2 specifically.
+- **`components/Checker.tsx`** reuses `SourceTypeSelector` as-is, a pill switcher matching the nav's
+  own tab-track styling for the three citation forms, a CTA bar styled identically to
+  `AutofillBar.tsx`'s bordered pill, and `CitationOutput.tsx`'s `Panel` component (now exported from
+  that file) for the corrected-version card — same amber warning-note treatment as `WarningNotes` for
+  the issues list, reimplemented locally in `Checker.tsx` since the source data shape differs
+  (`issues: string[]` here vs `CitationResult['warnings']` there).
+- **`app/actions.ts`**: new `checkCitationAction(text, sourceType, form)` Server Action wrapping
+  `checkCitation`, alongside the existing `validateCitationAction`.
+
 ## Deployment
 
 The GitHub repo is `github.com/rhyle-s/pinpoint` (`origin`), all work on `main`. Not deployed anywhere yet — deploying will need `vercel login` run interactively (can't be done from a non-interactive agent session).

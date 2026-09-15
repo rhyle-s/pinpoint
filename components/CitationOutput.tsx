@@ -100,14 +100,14 @@ function WarningNotes({ warnings }: { warnings: string[] | undefined }) {
   )
 }
 
-interface PanelProps {
+export interface PanelProps {
   label: string
   rule: string
   text: string
   accent: string
 }
 
-function Panel({ label, rule, text, accent }: PanelProps) {
+export function Panel({ label, rule, text, accent }: PanelProps) {
   const [copied, setCopied] = useState(false)
 
   // Writes both a plain-text and an HTML flavour, so italics (case names, journal titles etc)
