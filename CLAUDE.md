@@ -565,6 +565,21 @@ pill, an opaque white avatar+email pill, then a plain avatar-only circle with th
   and `EMAIL_TRUNCATE_LENGTH` were removed from `NavBar.tsx` as dead code once nothing truncated
   anything for on-screen display anymore.
 
+### Generate page header — pills dropped
+
+The user didn't like the bordered-pill treatment above the "Citation Generator" heading (an "AGLC4 ·
+4th edition" badge, plus three trust chips below the subtitle — autofill/rule-checked/save-to-library).
+Same process as the nav: mocked up four alternatives as an Artifact first — dropping the chips
+entirely, collapsing them into a dot-separated text line, keeping the icons but losing the pill
+borders/fills, and a maximally-minimal version folding everything into flowing sentences — then the
+user picked the icon-row one. `app/generate/page.tsx`:
+- The "AGLC4 · 4th edition" badge lost its `rounded-full border ... bg-primary-tint` pill styling —
+  it's now bare `text-primary` kicker text, no border or background at all.
+- The three trust chips lost their `rounded-full border ... shadow-xs` pill styling too — each is now
+  a small `bg-primary-tint` icon circle (no border) next to plain label text, laid out with `gap-x-6`
+  instead of packed into chip padding. The icons themselves are unchanged (same SVGs), only the
+  container around each one changed.
+
 ## Deployment
 
 The GitHub repo is `github.com/rhyle-s/pinpoint` (`origin`), all work on `main`. Not deployed anywhere yet — deploying will need `vercel login` run interactively (can't be done from a non-interactive agent session).
