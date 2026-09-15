@@ -6,9 +6,16 @@ describe('bibliographySectionFor — AGLC4 r 1.13 divisions', () => {
     expect(bibliographySectionFor('case', {} as never)).toBe('B')
   })
 
-  it('legislation and otherLegislativeMaterial -> C', () => {
+  it('legislation -> C', () => {
     expect(bibliographySectionFor('legislation', {} as never)).toBe('C')
-    expect(bibliographySectionFor('otherLegislativeMaterial', {} as never)).toBe('C')
+  })
+
+  it('otherLegislativeMaterial: bills and constitutions -> C, everything else -> E', () => {
+    expect(bibliographySectionFor('otherLegislativeMaterial', { subtype: 'bill' } as never)).toBe('C')
+    expect(bibliographySectionFor('otherLegislativeMaterial', { subtype: 'constitution' } as never)).toBe('C')
+    expect(bibliographySectionFor('otherLegislativeMaterial', { subtype: 'explanatoryMaterial' } as never)).toBe('E')
+    expect(bibliographySectionFor('otherLegislativeMaterial', { subtype: 'gazette' } as never)).toBe('E')
+    expect(bibliographySectionFor('otherLegislativeMaterial', { subtype: 'practiceDirection' } as never)).toBe('E')
   })
 
   it('journal/book/report/researchPaper/newspaper -> A', () => {

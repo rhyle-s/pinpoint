@@ -19,16 +19,22 @@ export const BIBLIOGRAPHY_SECTION_LABELS: Record<BibliographySection, string> = 
 // covering genuinely different kinds of source (a treaty and a foreign court judgment are not the
 // same section just because they're both 'internationalMaterial'), so this inspects the saved
 // `fields` for the actual subtype/foreignCategory/euCategory where the top-level type alone is
-// ambiguous. This mapping is a judgment call, not lifted verbatim from AGLC4's own text — flagged
-// as such since a couple of placements (newspaper articles under A, EU secondary legislation
-// under C) are reasonable but not the only defensible reading.
+// ambiguous. Every placement below was reviewed and confirmed directly with the user (see
+// CLAUDE.md's bibliography-sections entry) rather than left as an unconfirmed guess.
 export function bibliographySectionFor(sourceType: SourceType, fields: CitationFields): BibliographySection {
   switch (sourceType) {
     case 'case':
       return 'B'
     case 'legislation':
-    case 'otherLegislativeMaterial':
       return 'C'
+    case 'otherLegislativeMaterial': {
+      // Bills and constitutions are Legislation; explanatory material, gazettes, and practice
+      // directions are not — confirmed with the user, not the only defensible reading of AGLC4's
+      // own text.
+      const subtype = (fields as Partial<{ subtype: 'bill' | 'explanatoryMaterial' | 'gazette' | 'practiceDirection' | 'constitution' }>)
+        .subtype
+      return subtype === 'bill' || subtype === 'constitution' ? 'C' : 'E'
+    }
     case 'journal':
     case 'book':
     case 'report':
