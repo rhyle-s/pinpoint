@@ -538,6 +538,33 @@ reachable by reverting these commits.
   it lands under 'A', not nonsensically under 'C' for 'Commission') — same distinction the actual
   citation output already makes, just reused for sorting instead of formatting.
 
+### Nav bar turned blue
+
+The nav went from the light `bg-white/85 backdrop-blur-md` bar (the redesign-rollout shell from
+earlier this session) back to a solid `bg-primary` fill — the same blue the rest of the app already
+uses for buttons/links, chosen (over a darker navy or a gradient, both explored) specifically because
+it doesn't introduce a colour or treatment nothing else in the app uses. Landed on this by mocking up
+six options as an Artifact first (solid blue, deep navy, a subtle gradient, blue with opaque white
+"floating" tab/account controls, the current bar with just a blue accent line, and a gradient variant
+of the floating-white-controls option) and iterating live on the two the user was comparing before
+picking — the account control went through three passes in that process (a translucent avatar+email
+pill, an opaque white avatar+email pill, then a plain avatar-only circle with the email moved to a
+`title` tooltip instead of on-screen text) before landing on the last one.
+- **`Logo`** gets its `onDark` prop back (white ink, translucent accent dot) — it already had this
+  built in for exactly this scenario, unused since the redesign-rollout round switched the bar to
+  white.
+- **Tab track**: `bg-gray-100` → `bg-white/15` (translucent, since it's sitting on a solid colour now
+  rather than a light surface); the active tab stays solid white (`bg-white text-gray-900`), inactive
+  tabs `text-white/80`, the disabled "Checker" entry `text-white/40` — same relative contrast ratios
+  as before, just recalculated for the new background.
+- **Signed-out "Sign in"** inverted from `bg-primary text-white` to `bg-white text-primary` — the old
+  treatment would have been invisible (blue button on a now-blue bar).
+- **Signed-in account control**: no longer an avatar+truncated-email pill — just the avatar circle
+  (`bg-white text-brand-700`), full email moved to a `title` attribute (a real tooltip on hover)
+  instead of always-visible truncated text, "Sign out" stays a plain adjacent text link. `truncateEmail`
+  and `EMAIL_TRUNCATE_LENGTH` were removed from `NavBar.tsx` as dead code once nothing truncated
+  anything for on-screen display anymore.
+
 ## Deployment
 
 The GitHub repo is `github.com/rhyle-s/pinpoint` (`origin`), all work on `main`. Not deployed anywhere yet — deploying will need `vercel login` run interactively (can't be done from a non-interactive agent session).
