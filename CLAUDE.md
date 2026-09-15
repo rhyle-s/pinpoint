@@ -727,6 +727,36 @@ already in place, so this is purely new pages plus one branch in the callback ro
   `/auth/callback` in Supabase → Authentication → URL Configuration (both `localhost:3001` for dev
   and the eventual production domain) — the reset-password email link won't work without it.
 
+### Setting up a custom SMTP provider (fixes the "Error sending confirmation email" issue)
+
+Supabase's built-in email sender (used automatically when no custom SMTP is configured) is meant for
+early testing only — it's capped at roughly 2 emails/hour project-wide and only ever delivers to the
+project owner's own email address, so it will reliably fail (`"Error sending confirmation email"`)
+for a real student signing up, requesting a password reset, or a magic link. This has to be fixed in
+the Supabase dashboard, not in this app's code — there is nothing to change in `app/auth/` for this.
+
+1. **Pick a transactional email provider** and get its SMTP credentials. Any standard SMTP-speaking
+   provider works; Resend, Postmark, SendGrid, and Amazon SES are the ones Supabase's own docs call
+   out specifically. A free tier is enough at this project's current size (Resend's free tier is
+   3,000 emails/month, for example).
+2. **Verify a sending domain** with that provider first (its own dashboard will walk through adding
+   a few DNS records — SPF/DKIM, sometimes DMARC) — most providers refuse to send, or send but land
+   in spam, from an unverified domain. This step lives entirely with the email provider and the
+   domain's own DNS host, not Supabase or this app.
+3. **In the Supabase dashboard**: Project Settings → Authentication → SMTP Settings → enable "Enable
+   Custom SMTP", then fill in: Sender email (an address at the verified domain, eg
+   `noreply@aglcite.com.au`), Sender name (eg "Pinpoint"), Host/Port/Username/Password from the
+   provider's SMTP credentials page (Resend: host `smtp.resend.com`, port `465` or `587`, username
+   `resend`, password is the Resend API key; the other providers each have an equivalent SMTP-creds
+   page). Save.
+4. **Optional but worth doing while in there**: Authentication → Email Templates lets the confirm-
+   signup/reset-password/magic-link email bodies be edited away from Supabase's generic default
+   copy — none of this app's own code sends these emails or controls their content, so any wording
+   change has to happen here, not in `app/auth/`.
+5. **Re-test signup** (`/auth/signup` with a real, deliverable email address) — a working custom SMTP
+   setup should complete with the existing "Check your email to confirm your account…" success state
+   instead of the `"Error sending confirmation email"` failure documented above.
+
 ## Deployment
 
 The GitHub repo is `github.com/rhyle-s/pinpoint` (`origin`), all work on `main`. Not deployed anywhere yet — deploying will need `vercel login` run interactively (can't be done from a non-interactive agent session).
