@@ -526,6 +526,17 @@ reachable by reverting these commits.
   `getCitationTitle` → `bibliography_text` (`sortableAuthor`/`sortableTitle` helpers in
   `LibraryClient.tsx`) so every row has some sortable string — no separate "no author" bucket that
   would land inconsistently between the A–Z and Z–A directions.
+- **Author sort switched to surname, not the name as typed.** The user asked directly — "so it's not
+  possible to sort by author's last name?" — after the first pass sorted `'RJ Ellicott'` under 'R'.
+  It was possible after all: `lib/citation-engine/utils.ts` already exports `lastName()` (last
+  whitespace-separated token — the exact function `formatSubsequentAuthorList` already uses to build
+  real AGLC4 subsequent references like `'Edelman and Bant (n 2)'`) and `isInstitutionalAuthor()`
+  (used by the bibliography formatter to decide when *not* to invert a name — an organisation like
+  `'Australian Law Reform Commission'` is never treated as `'Given Surname'`). `sortableAuthor` in
+  `LibraryClient.tsx` now reuses both directly rather than inventing a second, possibly-inconsistent
+  heuristic: a personal author sorts by `lastName()`, an institutional one sorts by its full name (so
+  it lands under 'A', not nonsensically under 'C' for 'Commission') — same distinction the actual
+  citation output already makes, just reused for sorting instead of formatting.
 
 ## Deployment
 

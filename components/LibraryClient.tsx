@@ -5,6 +5,7 @@ import { formatItalics } from '@/lib/citation-engine'
 import { SourceType } from '@/lib/citation-engine/types'
 import { SOURCE_TYPE_LABELS, SOURCE_TYPE_PILL_CLASSES, SavedCitation, UNCATEGORISED_COLLECTION } from '@/lib/library-types'
 import { getCitationAuthor, getCitationTitle } from '@/lib/citation-title'
+import { isInstitutionalAuthor, lastName } from '@/lib/citation-engine/utils'
 import { createClient } from '@/lib/supabase/client'
 
 type SortOption = 'newest' | 'oldest' | 'type-az' | 'author-az' | 'author-za' | 'title-az' | 'title-za'
@@ -19,8 +20,16 @@ const DATE_FORMAT = new Intl.DateTimeFormat('en-AU', { day: 'numeric', month: 's
 function sortableTitle(c: SavedCitation): string {
   return getCitationTitle(c.source_type, c.fields) ?? c.bibliography_text
 }
+// Sorts by surname, not the name as typed ('RJ Ellicott' sorts under 'E', not 'R') — reuses the
+// citation engine's own lastName()/isInstitutionalAuthor() (lib/citation-engine/utils.ts), the same
+// functions that decide how a name is inverted in the actual bibliography output, rather than a
+// second, possibly-inconsistent heuristic living only here. An institutional author ('Australian Law
+// Reform Commission') is sorted by its full name, same as it's never inverted in the bibliography
+// either — alphabetising it under 'Commission' would be wrong, not just different.
 function sortableAuthor(c: SavedCitation): string {
-  return getCitationAuthor(c.source_type, c.fields) ?? sortableTitle(c)
+  const author = getCitationAuthor(c.source_type, c.fields)
+  if (!author) return sortableTitle(c)
+  return isInstitutionalAuthor(author) ? author : lastName(author)
 }
 
 // Sentinel <option> value for "+ Create new collection…" in CollectionEditor's dropdown — distinct
