@@ -72,3 +72,20 @@ export const SOURCE_TYPE_PILL_CLASSES: Record<SourceType, string> = {
   internationalMaterial: 'bg-teal-50 text-teal-700',
   otherSources: 'bg-gray-100 text-gray-600',
 }
+
+// Same colour family as SOURCE_TYPE_PILL_CLASSES above, just as a left-border accent (border-l-*-400)
+// for the Library table's rows — a second, lower-key use of the same per-type colour language rather
+// than a separate palette.
+export const SOURCE_TYPE_ACCENT_CLASSES: Record<SourceType, string> = {
+  case: 'border-l-rose-400',
+  legislation: 'border-l-emerald-400',
+  journal: 'border-l-purple-400',
+  book: 'border-l-amber-400',
+  report: 'border-l-orange-400',
+  researchPaper: 'border-l-pink-400',
+  website: 'border-l-gray-300',
+  newspaper: 'border-l-gray-300',
+  otherLegislativeMaterial: 'border-l-emerald-400',
+  internationalMaterial: 'border-l-teal-400',
+  otherSources: 'border-l-gray-300',
+}

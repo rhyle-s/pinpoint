@@ -272,9 +272,11 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
   const canClear = !isLoading && (hasAnyInput || status !== 'idle')
 
   return (
-    <div className="rounded-xl border border-gray-200 p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <span className="text-base font-medium text-gray-700">Fill in details automatically</span>
+    <div>
+      {/* This card's own "Fill in details automatically" heading now lives in the wrapping card
+          Generator.tsx renders around this component — only the Clear affordance stays here, since
+          it's the only other piece the old header row held. */}
+      <div className="mb-3 flex justify-end">
         <button
           type="button"
           onClick={handleClear}
@@ -301,7 +303,7 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
               onKeyDown={handleKeyDown}
               placeholder="Paste a URL or DOI…"
               disabled={isLoading}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-600 focus:outline-none focus:shadow-ring-brand disabled:opacity-60"
+              className="w-full rounded-xl border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition-colors focus:border-brand-600 focus:bg-white focus:outline-none focus:shadow-ring-brand disabled:opacity-60"
             />
             <button
               type="button"
@@ -336,7 +338,7 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
               }
               rows={4}
               disabled={isLoading}
-              className="w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-600 focus:outline-none focus:shadow-ring-brand disabled:opacity-60"
+              className="w-full resize-none rounded-xl border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition-colors focus:border-brand-600 focus:bg-white focus:outline-none focus:shadow-ring-brand disabled:opacity-60"
             />
             <button
               type="button"
@@ -375,8 +377,10 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
           disabled={isLoading}
           aria-label="Upload a PDF"
           title="Upload or drop a PDF — it's read in your browser and never uploaded to our servers"
-          className={`flex h-14 w-full shrink-0 flex-row items-center justify-center gap-1 rounded-lg text-center text-xs font-medium leading-tight text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:h-[144px] sm:w-[144px] sm:flex-col ${
-            isDraggingFile ? 'bg-[#1D4ED8]' : 'bg-primary hover:bg-[#1D4ED8]'
+          className={`flex h-14 w-full shrink-0 flex-row items-center justify-center gap-1.5 rounded-xl border-2 border-dashed text-center text-xs font-semibold leading-tight transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:h-[144px] sm:w-[144px] sm:flex-col ${
+            isDraggingFile
+              ? 'border-brand-500 bg-brand-100 text-primary'
+              : 'border-brand-200 bg-primary-tint text-primary hover:border-brand-400 hover:bg-brand-100'
           }`}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

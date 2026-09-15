@@ -3,7 +3,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { formatItalics } from '@/lib/citation-engine'
 import { SourceType } from '@/lib/citation-engine/types'
-import { SOURCE_TYPE_LABELS, SOURCE_TYPE_PILL_CLASSES, SavedCitation, UNCATEGORISED_COLLECTION } from '@/lib/library-types'
+import {
+  SOURCE_TYPE_ACCENT_CLASSES,
+  SOURCE_TYPE_LABELS,
+  SOURCE_TYPE_PILL_CLASSES,
+  SavedCitation,
+  UNCATEGORISED_COLLECTION,
+} from '@/lib/library-types'
 import { createClient } from '@/lib/supabase/client'
 
 type SortOption = 'newest' | 'oldest' | 'type-az'
@@ -93,6 +99,35 @@ function ChevronIcon({ expanded }: { expanded: boolean }) {
       className={`shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`}
     >
       <path d="m6 9 6 6 6-6" />
+    </svg>
+  )
+}
+
+function SearchIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-gray-400">
+      <circle cx="11" cy="11" r="7" />
+      <path d="m21 21-4.3-4.3" />
+    </svg>
+  )
+}
+
+// "All citations" sidebar entry — a stack/layers glyph rather than FolderIcon, since it represents
+// every citation rather than one collection.
+function LayersIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M12 3l9 5-9 5-9-5 9-5z" />
+      <path d="M3 13l9 5 9-5" />
+    </svg>
+  )
+}
+
+function GearIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1A2 2 0 1 1 7.1 3.3l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.6V2a2 2 0 1 1 4 0v.2a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.6 1H21a2 2 0 1 1 0 4h-.2a1.7 1.7 0 0 0-1.5 1z" />
     </svg>
   )
 }
@@ -419,7 +454,10 @@ function CitationRow({
 
   return (
     <>
-      <tr onClick={onToggle} className="cursor-pointer border-b border-gray-200 last:border-0 hover:bg-gray-50">
+      <tr
+        onClick={onToggle}
+        className={`cursor-pointer border-b border-l-4 border-gray-200 last:border-b-0 hover:bg-gray-50 ${SOURCE_TYPE_ACCENT_CLASSES[citation.source_type]}`}
+      >
         <td className="whitespace-nowrap py-2.5 pl-4 pr-2" onClick={(e) => e.stopPropagation()}>
           <input
             type="checkbox"
@@ -822,12 +860,16 @@ export default function LibraryClient({ userId }: { userId: string }) {
   // label yet).
   const collections = useMemo(() => {
     const names = new Set<string>()
-    let hasUncategorised = false
+    let uncategorisedCount = 0
     for (const c of citations) {
       if (c.label) names.add(c.label)
-      else hasUncategorised = true
+      else uncategorisedCount++
     }
-    return { names: Array.from(names).sort((a, b) => a.localeCompare(b)), hasUncategorised }
+    return {
+      names: Array.from(names).sort((a, b) => a.localeCompare(b)),
+      hasUncategorised: uncategorisedCount > 0,
+      uncategorisedCount,
+    }
   }, [citations])
 
   const collectionCounts = useMemo(
@@ -922,171 +964,266 @@ export default function LibraryClient({ userId }: { userId: string }) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center gap-3">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search citations…"
-          className="min-w-[200px] flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-600 focus:outline-none focus:shadow-ring-brand"
-        />
-        <select
-          value={sort}
-          onChange={(e) => setSort(e.target.value as SortOption)}
-          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-600 focus:outline-none focus:shadow-ring-brand"
-        >
-          <option value="newest">Date added (newest)</option>
-          <option value="oldest">Date added (oldest)</option>
-          <option value="type-az">Source type (A–Z)</option>
-        </select>
-        <select
-          value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value as TypeFilter)}
-          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-600 focus:outline-none focus:shadow-ring-brand"
-        >
-          <option value="all">All types</option>
-          {(Object.keys(SOURCE_TYPE_LABELS) as SourceType[]).map((type) => (
-            <option key={type} value={type}>
-              {SOURCE_TYPE_LABELS[type]}
-            </option>
-          ))}
-        </select>
-        {(collections.names.length > 0 || collections.hasUncategorised) && (
-          <select
-            value={collectionFilter}
-            onChange={(e) => setCollectionFilter(e.target.value)}
-            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-600 focus:outline-none focus:shadow-ring-brand"
+    <div className="grid items-start gap-6 lg:grid-cols-[240px_1fr]">
+      <aside className="space-y-6 lg:sticky lg:top-24">
+        <div>
+          <h1 className="text-[1.75rem] font-extrabold tracking-tight text-gray-900">Library</h1>
+          <p className="mt-1 text-sm text-gray-500">Your saved AGLC4 citations</p>
+        </div>
+
+        <div className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-3 py-2 shadow-xs transition-colors focus-within:border-brand-600 focus-within:shadow-ring-brand">
+          <SearchIcon />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search citations…"
+            className="w-full bg-transparent text-sm text-gray-900 outline-none placeholder:text-gray-400"
+          />
+        </div>
+
+        <nav className="space-y-0.5">
+          <button
+            type="button"
+            onClick={() => setCollectionFilter('all')}
+            className={`flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
+              collectionFilter === 'all' ? 'bg-primary-tint text-primary' : 'text-gray-700 hover:bg-gray-100'
+            }`}
           >
-            <option value="all">All collections</option>
-            {collections.names.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-            {collections.hasUncategorised && <option value={UNCATEGORISED_COLLECTION}>Uncategorised</option>}
-          </select>
-        )}
+            <span className="flex items-center gap-2">
+              <LayersIcon />
+              All citations
+            </span>
+            <span
+              className={`rounded-full px-2 py-0.5 text-xs tabular-nums ${
+                collectionFilter === 'all' ? 'bg-white text-primary shadow-xs' : 'bg-gray-100 text-gray-500'
+              }`}
+            >
+              {citations.length}
+            </span>
+          </button>
+
+          {(collections.names.length > 0 || collections.hasUncategorised) && (
+            <>
+              <p className="px-3 pb-1 pt-4 text-[11px] font-bold uppercase tracking-wide text-gray-400">Collections</p>
+              {collectionCounts.map(({ name, count }) => (
+                <button
+                  key={name}
+                  type="button"
+                  onClick={() => setCollectionFilter(name)}
+                  className={`flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    collectionFilter === name ? 'bg-primary-tint text-primary' : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <span className="flex min-w-0 items-center gap-2">
+                    <FolderIcon className="shrink-0 text-primary" />
+                    <span className="truncate">{name}</span>
+                  </span>
+                  <span
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs tabular-nums ${
+                      collectionFilter === name ? 'bg-white text-primary shadow-xs' : 'bg-gray-100 text-gray-500'
+                    }`}
+                  >
+                    {count}
+                  </span>
+                </button>
+              ))}
+              {collections.hasUncategorised && (
+                <button
+                  type="button"
+                  onClick={() => setCollectionFilter(UNCATEGORISED_COLLECTION)}
+                  className={`flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    collectionFilter === UNCATEGORISED_COLLECTION
+                      ? 'bg-primary-tint text-primary'
+                      : 'text-gray-400 hover:bg-gray-100'
+                  }`}
+                >
+                  <span className="flex min-w-0 items-center gap-2">
+                    <FolderIcon className="shrink-0 text-gray-300" />
+                    <span className="truncate">Uncategorised</span>
+                  </span>
+                  <span
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs tabular-nums ${
+                      collectionFilter === UNCATEGORISED_COLLECTION ? 'bg-white text-primary shadow-xs' : 'bg-gray-100 text-gray-500'
+                    }`}
+                  >
+                    {collections.uncategorisedCount}
+                  </span>
+                </button>
+              )}
+            </>
+          )}
+        </nav>
+
         {collections.names.length > 0 && (
           <button
             type="button"
             onClick={() => setManagingCollections((v) => !v)}
             aria-pressed={managingCollections}
-            className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
-              managingCollections
-                ? 'border-brand-200 bg-primary-tint text-primary hover:bg-brand-100'
-                : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+            className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
+              managingCollections ? 'bg-primary-tint text-primary' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
             }`}
           >
+            <GearIcon />
             Manage collections
           </button>
         )}
-        <ExportMenu collectionNames={collections.names} hasUncategorised={collections.hasUncategorised} />
-      </div>
+      </aside>
 
-      {managingCollections && (
-        <div className="overflow-hidden rounded-xl border border-gray-300 bg-white">
-          <div className="border-b border-gray-200 bg-primary-tint px-4 py-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-900">Manage collections</p>
-            <p className="mt-1 text-xs text-gray-500">
-              Deleting a collection doesn&rsquo;t delete its citations — they&rsquo;re just left uncategorised.
+      <div className="space-y-5">
+        {managingCollections && (
+          <div className="overflow-hidden rounded-xl border border-gray-300 bg-white">
+            <div className="border-b border-gray-200 bg-primary-tint px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-900">Manage collections</p>
+              <p className="mt-1 text-xs text-gray-500">
+                Deleting a collection doesn&rsquo;t delete its citations — they&rsquo;re just left uncategorised.
+              </p>
+            </div>
+            <ManageCollectionsPanel
+              userId={userId}
+              collectionCounts={collectionCounts}
+              onCollectionDeleted={handleCollectionDeleted}
+              onCollectionRenamed={handleCollectionRenamed}
+            />
+          </div>
+        )}
+
+        {selectedIds.size > 0 ? (
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-brand-200 bg-primary-tint p-3">
+            <span className="text-sm font-medium text-gray-700">{selectedIds.size} selected</span>
+            <BulkCollectionAssigner count={selectedIds.size} collectionOptions={collections.names} onAssign={handleBulkAssign} />
+            <button
+              type="button"
+              onClick={handleBulkDelete}
+              disabled={bulkDeleting}
+              className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                confirmingBulkDelete
+                  ? 'border-red-200 bg-red-50 text-red-600'
+                  : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+              }`}
+            >
+              {bulkDeleting ? 'Deleting…' : confirmingBulkDelete ? 'Are you sure?' : 'Delete selected'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedIds(new Set())}
+              className="text-sm font-medium text-gray-500 hover:text-gray-700"
+            >
+              Clear selection
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-primary-tint py-1 pl-1 pr-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-white">
+                {citations.length}
+              </span>
+              <span className="text-sm font-medium text-gray-700">
+                {citations.length === 1 ? 'citation saved' : 'citations saved'}
+              </span>
+            </div>
+            {collections.names.length > 0 && (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 shadow-xs">
+                <FolderIcon className="text-gray-400" />
+                {collections.names.length} {collections.names.length === 1 ? 'collection' : 'collections'}
+              </span>
+            )}
+            <div className="flex-1" />
+            <ExportMenu collectionNames={collections.names} hasUncategorised={collections.hasUncategorised} />
+          </div>
+        )}
+
+        {citations.length > 0 && visibleCitations.length !== 0 && (
+          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-gray-200 bg-white p-2 shadow-xs">
+            <button
+              type="button"
+              onClick={() => setTypeFilter('all')}
+              className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                typeFilter === 'all' ? 'bg-gray-900 text-white' : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              All types
+            </button>
+            {(Object.keys(SOURCE_TYPE_LABELS) as SourceType[]).map((type) => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => setTypeFilter(type)}
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors hover:opacity-80 ${
+                  SOURCE_TYPE_PILL_CLASSES[type]
+                } ${typeFilter === type ? 'ring-2 ring-inset ring-gray-900' : ''}`}
+              >
+                {SOURCE_TYPE_LABELS[type]}
+              </button>
+            ))}
+            <div className="ml-auto">
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value as SortOption)}
+                className="rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs font-medium text-gray-600 outline-none transition-colors focus:border-brand-600 focus:shadow-ring-brand"
+              >
+                <option value="newest">Date added (newest)</option>
+                <option value="oldest">Date added (oldest)</option>
+                <option value="type-az">Source type (A–Z)</option>
+              </select>
+            </div>
+          </div>
+        )}
+
+        {citations.length === 0 ? (
+          <div className="rounded-xl border border-gray-200 p-8 text-center">
+            <p className="text-sm text-gray-500">
+              No citations saved yet. Generate a citation and click &ldquo;Save to library&rdquo; to add it here.
             </p>
           </div>
-          <ManageCollectionsPanel
-            userId={userId}
-            collectionCounts={collectionCounts}
-            onCollectionDeleted={handleCollectionDeleted}
-            onCollectionRenamed={handleCollectionRenamed}
-          />
-        </div>
-      )}
-
-      {selectedIds.size > 0 ? (
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-brand-200 bg-primary-tint p-3">
-          <span className="text-sm font-medium text-gray-700">{selectedIds.size} selected</span>
-          <BulkCollectionAssigner count={selectedIds.size} collectionOptions={collections.names} onAssign={handleBulkAssign} />
-          <button
-            type="button"
-            onClick={handleBulkDelete}
-            disabled={bulkDeleting}
-            className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-              confirmingBulkDelete
-                ? 'border-red-200 bg-red-50 text-red-600'
-                : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
-            }`}
-          >
-            {bulkDeleting ? 'Deleting…' : confirmingBulkDelete ? 'Are you sure?' : 'Delete selected'}
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedIds(new Set())}
-            className="text-sm font-medium text-gray-500 hover:text-gray-700"
-          >
-            Clear selection
-          </button>
-        </div>
-      ) : (
-        <div className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-primary-tint py-1 pl-1 pr-3">
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-white">
-            {citations.length}
-          </span>
-          <span className="text-sm font-medium text-gray-700">{citations.length === 1 ? 'citation saved' : 'citations saved'}</span>
-        </div>
-      )}
-
-      {citations.length === 0 ? (
-        <div className="rounded-xl border border-gray-200 p-8 text-center">
-          <p className="text-sm text-gray-500">
-            No citations saved yet. Generate a citation and click &ldquo;Save to library&rdquo; to add it here.
-          </p>
-        </div>
-      ) : visibleCitations.length === 0 ? (
-        <div className="rounded-xl border border-gray-200 p-8 text-center">
-          <p className="text-sm text-gray-500">No citations match your search.</p>
-        </div>
-      ) : (
-        <div className="overflow-x-auto rounded-xl border border-gray-300 bg-white">
-          <table className="w-full border-collapse text-left">
-            <thead>
-              <tr className="border-b border-gray-200 bg-primary-tint text-xs font-semibold uppercase tracking-wide text-gray-900">
-                <th className="whitespace-nowrap py-2 pl-4 pr-2">
-                  <input
-                    ref={selectAllRef}
-                    type="checkbox"
-                    checked={allVisibleSelected}
-                    onChange={handleToggleSelectAll}
-                    aria-label="Select all visible citations"
-                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-brand-600"
+        ) : visibleCitations.length === 0 ? (
+          <div className="rounded-xl border border-gray-200 p-8 text-center">
+            <p className="text-sm text-gray-500">No citations match your search.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto rounded-xl border border-gray-300 bg-white">
+            <table className="w-full border-collapse text-left">
+              <thead>
+                <tr className="border-b border-gray-200 bg-primary-tint text-xs font-semibold uppercase tracking-wide text-gray-900">
+                  <th className="whitespace-nowrap py-2 pl-4 pr-2">
+                    <input
+                      ref={selectAllRef}
+                      type="checkbox"
+                      checked={allVisibleSelected}
+                      onChange={handleToggleSelectAll}
+                      aria-label="Select all visible citations"
+                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-brand-600"
+                    />
+                  </th>
+                  <th className="whitespace-nowrap py-2 pr-3">Type</th>
+                  <th className="py-2 pr-3">Citation</th>
+                  <th className="whitespace-nowrap py-2 pr-3">Saved</th>
+                  <th className="py-2 pr-4" />
+                </tr>
+              </thead>
+              <tbody>
+                {visibleCitations.map((citation) => (
+                  <CitationRow
+                    key={citation.id}
+                    citation={citation}
+                    expanded={expandedId === citation.id}
+                    showCollectionEditor={collectionEditorId === citation.id}
+                    collectionOptions={collections.names}
+                    selected={selectedIds.has(citation.id)}
+                    onToggle={() => setExpandedId((current) => (current === citation.id ? null : citation.id))}
+                    onToggleCollectionEditor={() =>
+                      setCollectionEditorId((current) => (current === citation.id ? null : citation.id))
+                    }
+                    onToggleSelect={() => handleToggleSelect(citation.id)}
+                    onDeleted={handleDeleted}
+                    onLabelChanged={handleLabelChanged}
                   />
-                </th>
-                <th className="whitespace-nowrap py-2 pr-3">Type</th>
-                <th className="py-2 pr-3">Citation</th>
-                <th className="whitespace-nowrap py-2 pr-3">Saved</th>
-                <th className="py-2 pr-4" />
-              </tr>
-            </thead>
-            <tbody>
-              {visibleCitations.map((citation) => (
-                <CitationRow
-                  key={citation.id}
-                  citation={citation}
-                  expanded={expandedId === citation.id}
-                  showCollectionEditor={collectionEditorId === citation.id}
-                  collectionOptions={collections.names}
-                  selected={selectedIds.has(citation.id)}
-                  onToggle={() => setExpandedId((current) => (current === citation.id ? null : citation.id))}
-                  onToggleCollectionEditor={() =>
-                    setCollectionEditorId((current) => (current === citation.id ? null : citation.id))
-                  }
-                  onToggleSelect={() => handleToggleSelect(citation.id)}
-                  onDeleted={handleDeleted}
-                  onLabelChanged={handleLabelChanged}
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

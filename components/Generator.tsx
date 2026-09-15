@@ -11,6 +11,7 @@ import { validateCitationAction } from '@/app/actions'
 import { mapFieldsAcrossSourceType } from '@/lib/autofill/cross-type-map'
 import { changedKeys, mergeAutofillFields } from '@/lib/autofill/merge'
 import { AutofillFields, AutofillResult } from '@/lib/autofill/types'
+import { SOURCE_TYPE_LABELS } from '@/lib/library-types'
 import {
   BookFields,
   CaseFields,
@@ -631,9 +632,20 @@ export default function Generator({ initialSourceType }: GeneratorProps) {
           : undefined
 
   return (
-    <div className="space-y-8">
-      <div className="space-y-3">
-        <AutofillBar onAutofill={handleAutofill} onLoadingChange={setAutofillLoading} />
+    <div className="grid items-start gap-6 lg:grid-cols-[1fr_400px]">
+      <div className="space-y-6">
+        <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-card sm:p-6">
+          <div className="mb-4 flex items-center gap-2.5">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-tint text-primary">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3z" />
+                <path d="M19 14l.8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8L19 14z" />
+              </svg>
+            </span>
+            <h2 className="text-[13px] font-bold uppercase tracking-wide text-gray-900">Fill in details automatically</h2>
+          </div>
+          <AutofillBar onAutofill={handleAutofill} onLoadingChange={setAutofillLoading} />
+        </section>
 
         {autofillNotice && (
           <div className="flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm">
@@ -686,12 +698,13 @@ export default function Generator({ initialSourceType }: GeneratorProps) {
             </button>
           </div>
         )}
-      </div>
 
-      <SourceTypeSelector selected={selectedSourceType} onSelect={handleSourceTypeSelect} />
+        <SourceTypeSelector selected={selectedSourceType} onSelect={handleSourceTypeSelect} />
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-        <div className="rounded-xl border border-gray-200 p-6">
+        <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-card sm:p-6">
+          <h2 className="mb-4 text-[13px] font-bold uppercase tracking-wide text-gray-900">
+            {SOURCE_TYPE_LABELS[selectedSourceType]} details
+          </h2>
           {selectedSourceType === 'case' && (
             <CaseForm
               fields={caseFields}
@@ -791,12 +804,16 @@ export default function Generator({ initialSourceType }: GeneratorProps) {
               }}
             />
           )}
-        </div>
+        </section>
+      </div>
 
-        <div className="space-y-3">
-          <CitationOutput result={result} validating={validating || autofillLoading} rules={rules} badge={badge} />
-          {currentFields && <SaveToLibraryButton sourceType={selectedSourceType} fields={currentFields} result={result} />}
-        </div>
+      <div className="space-y-4 lg:sticky lg:top-24">
+        <CitationOutput result={result} validating={validating || autofillLoading} rules={rules} badge={badge} />
+        {currentFields && (
+          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-gray-200 bg-white p-3 shadow-card">
+            <SaveToLibraryButton sourceType={selectedSourceType} fields={currentFields} result={result} />
+          </div>
+        )}
       </div>
     </div>
   )

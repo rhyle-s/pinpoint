@@ -15,11 +15,23 @@ interface CitationOutputProps {
   badge?: string
 }
 
+function ShieldCheckIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
+      <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" />
+      <path d="M9 12l2 2 4-4" />
+    </svg>
+  )
+}
+
+// Full-width banner rather than a small pill — the same 5 states as before (validating / validated
+// high-confidence / validated but unsure / corrected / unvalidated), just given more presence since
+// it's the first thing a student should read about the result.
 function ValidationStatus({ validating, result }: { validating: boolean; result: CitationResult | null }) {
   if (validating) {
     return (
-      <div className="flex items-center gap-2 text-xs text-gray-400">
-        <span className="h-3 w-3 animate-spin rounded-full border-2 border-gray-300 border-t-gray-500" />
+      <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-500">
+        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-500" />
         Verifying…
       </div>
     )
@@ -30,24 +42,26 @@ function ValidationStatus({ validating, result }: { validating: boolean; result:
   if (result.validationStatus === 'validated') {
     // A 'validated' verdict at medium/low confidence is a weaker claim than the model being sure
     // — styling it the same as a high-confidence pass would overstate it, so it borrows the
-    // 'corrected' badge's amber treatment (and drops the checkmark) instead of green + tick.
+    // 'corrected' banner's amber treatment (and drops the checkmark) instead of green + tick.
     const unsure = result.confidence === 'medium' || result.confidence === 'low'
     return (
-      <span
-        className={`inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
-          unsure ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-600'
+      <div
+        className={`flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold ${
+          unsure ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'
         }`}
       >
-        AGLC4 check passed{unsure ? ` · ${result.confidence} confidence` : ' ✓'}
-      </span>
+        <ShieldCheckIcon />
+        AGLC4 check passed{unsure ? ` · ${result.confidence} confidence` : ''}
+      </div>
     )
   }
 
   if (result.validationStatus === 'corrected') {
     return (
-      <span className="inline-flex w-fit items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
+      <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700">
+        <ShieldCheckIcon />
         Corrected{result.confidence ? ` · ${result.confidence} confidence` : ''}
-      </span>
+      </div>
     )
   }
 
@@ -56,9 +70,10 @@ function ValidationStatus({ validating, result }: { validating: boolean; result:
   // output silently in that case). Shown explicitly rather than rendering nothing, so "no badge"
   // is never mistakeable for "checked and fine" — see CLAUDE.md for the reasoning.
   return (
-    <span className="inline-flex w-fit items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500">
+    <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-500">
+      <ShieldCheckIcon />
       Not AGLC4-checked
-    </span>
+    </div>
   )
 }
 
@@ -89,9 +104,10 @@ interface PanelProps {
   label: string
   rule: string
   text: string
+  accent: string
 }
 
-function Panel({ label, rule, text }: PanelProps) {
+function Panel({ label, rule, text, accent }: PanelProps) {
   const [copied, setCopied] = useState(false)
 
   // Writes both a plain-text and an HTML flavour, so italics (case names, journal titles etc)
@@ -130,23 +146,38 @@ function Panel({ label, rule, text }: PanelProps) {
   }
 
   return (
-    <div className="rounded-xl border border-gray-300 bg-white p-5">
-      <div className="mb-3 flex items-center justify-between">
+    <div className={`border-l-4 px-5 py-4 ${accent}`}>
+      <div className="mb-2 flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-base font-medium text-gray-900">{label}</h3>
-          <p className="text-xs text-gray-400">{rule}</p>
+          <p className="text-[13px] font-bold text-gray-900">{label}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">{rule}</p>
         </div>
         <button
           type="button"
           onClick={handleCopy}
           disabled={!text}
-          className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
+          className={`flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-colors ${
             copied
               ? 'border-emerald-200 bg-emerald-50 text-emerald-600'
-              : 'border-gray-200 text-gray-600 hover:border-gray-300 disabled:cursor-not-allowed disabled:opacity-40'
+              : 'border-brand-200 bg-primary-tint text-primary hover:bg-brand-100 disabled:cursor-not-allowed disabled:opacity-40'
           }`}
         >
-          {copied ? 'Copied ✓' : 'Copy'}
+          {copied ? (
+            <>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+              Copied
+            </>
+          ) : (
+            <>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="9" y="9" width="12" height="12" rx="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+              Copy
+            </>
+          )}
         </button>
       </div>
       {/* Times New Roman, 15px/1.8 line-height per the brand spec's citation-output typography —
@@ -163,18 +194,22 @@ function Panel({ label, rule, text }: PanelProps) {
 export default function CitationOutput({ result, validating, rules, badge }: CitationOutputProps) {
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <ValidationStatus validating={validating} result={result} />
-        {badge && (
-          <span className="inline-flex w-fit items-center gap-1 rounded-full bg-primary-tint px-2.5 py-1 text-xs font-medium text-primary">
-            {badge}
-          </span>
-        )}
-      </div>
+      <ValidationStatus validating={validating} result={result} />
+      {badge && (
+        <span className="inline-flex w-fit items-center gap-1 rounded-full bg-primary-tint px-2.5 py-1 text-xs font-medium text-primary">
+          {badge}
+        </span>
+      )}
       <WarningNotes warnings={result?.warnings} />
-      <Panel label="Footnote citation" rule={rules.footnote} text={result?.footnote ?? ''} />
-      <Panel label="Subsequent reference" rule={rules.subsequent} text={result?.subsequent ?? ''} />
-      <Panel label="Bibliography entry" rule={rules.bibliography} text={result?.bibliography ?? ''} />
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-card">
+        <Panel label="Footnote citation" rule={rules.footnote} text={result?.footnote ?? ''} accent="border-brand-600" />
+        <div className="border-t border-gray-100">
+          <Panel label="Subsequent reference" rule={rules.subsequent} text={result?.subsequent ?? ''} accent="border-brand-400" />
+        </div>
+        <div className="border-t border-gray-100">
+          <Panel label="Bibliography entry" rule={rules.bibliography} text={result?.bibliography ?? ''} accent="border-gray-300" />
+        </div>
+      </div>
     </div>
   )
 }

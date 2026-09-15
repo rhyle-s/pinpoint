@@ -19,6 +19,12 @@ function truncateEmail(email: string): string {
   return email.length > EMAIL_TRUNCATE_LENGTH ? `${email.slice(0, EMAIL_TRUNCATE_LENGTH)}...` : email
 }
 
+// No display name anywhere in this app's auth (magic-link email only) — the avatar pill's initials
+// come from the email's own local-part instead of a name field that doesn't exist.
+function getInitials(email: string): string {
+  return email.split('@')[0].slice(0, 2).toUpperCase()
+}
+
 function AuthControl() {
   const router = useRouter()
   const [email, setEmail] = useState<string | null | undefined>(undefined) // undefined = still loading
@@ -45,7 +51,7 @@ function AuthControl() {
     return (
       <Link
         href="/auth/login"
-        className="rounded-lg bg-white px-4 py-1.5 text-sm font-semibold text-primary transition-colors hover:bg-white/90"
+        className="rounded-full bg-primary px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-[#1D4ED8]"
       >
         Sign in
       </Link>
@@ -54,13 +60,18 @@ function AuthControl() {
 
   return (
     <div className="flex items-center gap-3">
-      <span className="text-base font-medium text-white/75" title={email}>
-        {truncateEmail(email)}
-      </span>
+      <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-white py-1 pl-1 pr-3 shadow-xs">
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-100 text-[11px] font-bold text-brand-700">
+          {getInitials(email)}
+        </span>
+        <span className="text-sm font-medium text-gray-700" title={email}>
+          {truncateEmail(email)}
+        </span>
+      </div>
       <button
         type="button"
         onClick={handleSignOut}
-        className="rounded-lg bg-white px-4 py-1.5 text-sm font-semibold text-primary transition-colors hover:bg-white/90"
+        className="text-sm font-medium text-gray-500 transition-colors hover:text-gray-700"
       >
         Sign out
       </button>
@@ -72,42 +83,45 @@ export default function NavBar() {
   const pathname = usePathname()
 
   return (
-    <header className="bg-primary">
-      <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-40 border-b border-gray-200 bg-white/85 backdrop-blur-md">
+      <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         <Link href="/generate">
-          <Logo size="xl" onDark />
+          <Logo size="lg" />
         </Link>
 
-        <div className="hidden items-center gap-6 sm:flex">
-          <ul className="flex items-center gap-6">
+        <div className="hidden items-center gap-4 sm:flex">
+          <div className="flex items-center gap-0.5 rounded-full bg-gray-100 p-1">
             {TABS.map((tab) => {
               if (!tab.active) {
                 return (
-                  <li key={tab.label} className="group relative">
-                    <span className="cursor-not-allowed text-base font-medium text-white/40">{tab.label}</span>
+                  <div key={tab.label} className="group relative">
+                    <span className="cursor-not-allowed rounded-full px-4 py-1.5 text-sm font-semibold text-gray-300">
+                      {tab.label}
+                    </span>
                     <span className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
                       Coming soon
                     </span>
-                  </li>
+                  </div>
                 )
               }
 
               const isCurrent = pathname === tab.href || pathname?.startsWith(`${tab.href}/`)
 
               return (
-                <li key={tab.label}>
-                  <Link
-                    href={tab.href}
-                    className={`text-base font-medium ${isCurrent ? 'text-white' : 'text-white/75 hover:text-white'}`}
-                  >
-                    {tab.label}
-                  </Link>
-                </li>
+                <Link
+                  key={tab.label}
+                  href={tab.href}
+                  className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${
+                    isCurrent ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  {tab.label}
+                </Link>
               )
             })}
-          </ul>
+          </div>
 
-          <div className="h-5 w-px bg-white/20" aria-hidden />
+          <div className="h-5 w-px bg-gray-200" aria-hidden />
 
           <AuthControl />
         </div>

@@ -422,6 +422,63 @@ Until step 3 is done, every Supabase call fails fast (`ERR_NAME_NOT_RESOLVED` ag
 - **Header row text → near-black, collection tag pill → blue, Cases pill recoloured to make room.** Both header rows' `text-gray-600` became `text-gray-900` (the app's near-black, not literal `#000`, to stay on the existing warm neutral scale). The per-citation collection-tag pill in the table (`citation.label`, when set) went from `bg-gray-100 text-gray-500` to `bg-primary-tint text-primary` — but Cases already used that exact blue for its type pill (`SOURCE_TYPE_PILL_CLASSES.case` in `lib/library-types.ts`), which would've put two identically-blue pills side by side on any Cases row that also has a collection. Tried indigo first — too close to both blue and to Journal Article's existing purple at pill size — settled on rose (`bg-rose-50 text-rose-700`, `lib/library-types.ts`) since it's clearly outside both the blue and purple families, not just a technically-different shade.
 - **"Manage collections" toggle button gets a pressed state.** It previously looked identical whether the panel below it was open or closed — no visual feedback for a toggle. Now conditional on `managingCollections`: the same blue-tint treatment used elsewhere for an active/selected control (`border-brand-200 bg-primary-tint text-primary hover:bg-brand-100`) while the panel is open, reverting to the plain `border-gray-300 bg-white text-gray-700` outline once closed. Also added `aria-pressed={managingCollections}` since this is genuinely a toggle button, not a momentary action.
 
+### Redesign rollout — nav, Generator page, Library page
+
+Origin: a static HTML mock-up (an Artifact — no code touched) exploring a more visually sophisticated
+version of the site, built on the existing brand tokens (colours, Plus Jakarta Sans, the citation
+serif font). The user reviewed it and asked for specific pieces to actually be built, explicitly
+**"keep everything else the same"** for anything not called out. Asked how "keep the current design
+as a fallback" should work — a live in-app toggle, or just git-revertible — and the user chose
+**git-revertible only**: no feature flag, no dual-render code path; the previous design is only
+reachable by reverting these commits.
+
+- **`NavBar.tsx`**: switched from a solid `bg-primary` bar to `sticky top-0 z-40 bg-white/85
+  backdrop-blur-md border-b border-gray-200` — this is the one non-obvious consequence of "adopt the
+  pill nav" the user asked for: the pill track and account pill are designed to sit on a light
+  surface, not the old blue one. `Logo` is unchanged (the user explicitly said keep the wordmark as-is)
+  — just dropped `onDark` and sized down from `xl` to `lg` for the new, more compact bar. `TABS`
+  became a `bg-gray-100 rounded-full p-1` pill track (active: `bg-white shadow-xs text-gray-900`); the
+  disabled "Checker" entry keeps its exact tooltip/`cursor-not-allowed` behaviour. `AuthControl`:
+  signed-out "Sign in" is now a filled pill button (readable on light bg); signed-in becomes a pill
+  with a 2-letter avatar circle — initials from the email's own local-part, since this app's auth
+  (magic link) has no display name anywhere — plus the existing truncated email, with "Sign out" kept
+  as a plain adjacent text control rather than tucked into a new dropdown-menu pattern.
+- **Generator page** (`app/generate/page.tsx`, `Generator.tsx`, `SourceTypeSelector.tsx`,
+  `AutofillBar.tsx`, `CitationOutput.tsx`): `page.tsx` gained an AGLC4-badge + trust-chip row above a
+  bigger `balance`d heading (static content only). `Generator.tsx`'s layout became a sticky two-column
+  grid (`lg:grid-cols-[1fr_400px]`); the autofill card, source-type picker, and active form each sit in
+  their own `rounded-2xl shadow-card` section with a small uppercase header — none of the underlying
+  state/handlers changed, only the wrapping JSX. `SourceTypeSelector.tsx` went from a `<select>` back
+  to an icon-tile grid (its own comment had explained switching *to* a dropdown purely to save space;
+  the new layout has the room, so that's reversed, noted directly in the file) — reuses
+  `SOURCE_TYPE_LABELS` from `lib/library-types.ts` instead of keeping its own separate duplicate label
+  list. `AutofillBar.tsx`'s drag-and-drop/loading-state logic is completely untouched — only its return
+  JSX changed (dashed-border tint on the *existing* 144px drop-target square, its own top label row
+  dropped since Generator's new wrapping card supplies that now, keeping just the Clear button).
+  `CitationOutput.tsx`: `ValidationStatus`'s 5 states became a full-width banner instead of a small
+  pill (same colours); the three `Panel`s merged into one `rounded-2xl divide-y` card with a coloured
+  `border-l-4` accent per panel and an icon added to the existing "Copied ✓" button state.
+  **Deliberately not touched**: the 11 per-type form files' (`CaseForm.tsx` etc) own internal field
+  layout — still their existing single-column stacking, not rebuilt into the mock-up's illustrative
+  2-column Case example, since that was one illustrative layout, not a spec for all 11 forms, and
+  rewriting 11 files' internals for a shell-level redesign was a lot of avoidable per-file risk.
+- **Library page** (`app/library/page.tsx`, `LibraryClient.tsx`, `lib/library-types.ts`): `page.tsx`
+  dropped its own `<h1>` — page identity now lives in the new sidebar. `LibraryClient.tsx`'s top-level
+  layout became `grid lg:grid-cols-[240px_1fr]`: a sticky sidebar (Library heading, the same
+  `search`/`setSearch` input just relocated, a nav list built from the existing `collections`/
+  `collectionCounts` memos driving the same `collectionFilter` state a `<select>` used to, "Manage
+  collections" moved down here too) and a main pane (existing citations-saved pill + a new "N
+  collections" chip + `ExportMenu` in one stats row; the old plain type `<select>` became a row of
+  colour chips — **all 11 source types**, not just the handful shown in the illustrative mock-up, each
+  using the exact colours already in `SOURCE_TYPE_PILL_CLASSES`, wrapping as needed). The table itself
+  is functionally identical (every column, the expandable rows, bulk-select) plus a new `border-l-4`
+  colour accent per row via `SOURCE_TYPE_ACCENT_CLASSES` (new export in `lib/library-types.ts`, same
+  colour family as `SOURCE_TYPE_PILL_CLASSES`, just `border-l-{colour}-400`). **Deliberately not
+  added**: the mock-up's "+ New collection" sidebar button — there's no backend concept of an empty
+  collection today (a collection is just a free-text `label` that exists because ≥1 citation has it),
+  so a literal "create an empty collection" control would have been new functionality this task didn't
+  ask for, not a restyle.
+
 ## Deployment
 
 The GitHub repo is `github.com/rhyle-s/pinpoint` (`origin`), all work on `main`. Not deployed anywhere yet — deploying will need `vercel login` run interactively (can't be done from a non-interactive agent session).
