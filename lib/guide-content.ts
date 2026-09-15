@@ -5,12 +5,20 @@ export interface GuideExample {
   fields: CitationFields
 }
 
+// A source type bundling several unrelated AGLC4 formats under one umbrella (internationalMaterial,
+// otherSources) uses an array of labelled templates here instead of one plain string — rendered as
+// several small labelled boxes rather than concatenating every format into a single wall of text.
+export interface FormatTemplateItem {
+  label: string
+  template: string
+}
+
 export interface GuideEntry {
   sourceType: SourceType
   title: string
   chapterRef: string
   category: 'primary' | 'secondary' | 'international'
-  formatTemplate: string
+  formatTemplate: string | FormatTemplateItem[]
   examples: GuideExample[]
   keyRules: string[]
 }
@@ -895,8 +903,27 @@ export const GUIDE_ENTRIES: GuideEntry[] = [
     title: 'International Material',
     chapterRef: 'AGLC4 ch 8, r 9.2.4, Part V, ch 14',
     category: 'international',
-    formatTemplate:
-      'Treaty: [Italic Title], opened for signature [Date], [Treaty Series] (entered into force [Date]) Pinpoint.  •  UN Materials: [Italic Title], GA Res [Resolution Number] ([Session]), UN GAOR, UN Doc [Symbol] ([Date][, adopted Adopted Date]) Pinpoint.  •  Foreign Domestic Sources: cited in the style of its own jurisdiction of origin — Canada/NZ/UK/US/Hong Kong/Malaysia/Singapore/South Africa each have their own AGLC4 rule; see the worked examples.  •  European Union / Council of Europe Materials: six formats under AGLC4 ch 14.2/14.3 — Official Journal, Constitutive Treaties, Courts of the EU, Council of Europe Basic Documents, the European Court of Human Rights, and the European Commission of Human Rights; see the worked examples.',
+    formatTemplate: [
+      {
+        label: 'Treaty',
+        template: '[Italic Title], opened for signature [Date], [Treaty Series] (entered into force [Date]) Pinpoint.',
+      },
+      {
+        label: 'UN Materials',
+        template:
+          '[Italic Title], GA Res [Resolution Number] ([Session]), UN GAOR, UN Doc [Symbol] ([Date][, adopted Adopted Date]) Pinpoint.',
+      },
+      {
+        label: 'Foreign Domestic Sources',
+        template:
+          'Cited in the style of its own jurisdiction of origin — Canada/NZ/UK/US/Hong Kong/Malaysia/Singapore/South Africa each have their own AGLC4 rule; see the worked examples.',
+      },
+      {
+        label: 'European Union / Council of Europe Materials',
+        template:
+          'Six formats under AGLC4 ch 14.2/14.3 — Official Journal, Constitutive Treaties, Courts of the EU, Council of Europe Basic Documents, the European Court of Human Rights, and the European Commission of Human Rights; see the worked examples.',
+      },
+    ],
     examples: INTERNATIONAL_MATERIAL_EXAMPLES,
     keyRules: [
       "Treaty — cite the treaty title exactly as it appears on the first page, don't shorten or paraphrase it; bilateral and trilateral treaties join party names with an en dash (–), not a hyphen; use conventional shortened state names, eg Australia rather than Commonwealth of Australia.",
@@ -917,8 +944,18 @@ export const GUIDE_ENTRIES: GuideEntry[] = [
     title: 'Other Sources',
     chapterRef: 'AGLC4 ch 7',
     category: 'secondary',
-    formatTemplate:
-      "Dictionary: [Italic Dictionary Title] (Edition ed, Year) 'Entry' (def N).  •  Legal Encyclopedia: Publisher, [Italic Title], vol N (at Date) TitleNo Name, 'ChapterNo Name' [Paragraph].  •  Speech: Author, 'Title' (Speech, Forum, Date) Pinpoint.  •  Press/Media Release: Author, 'Title' (ReleaseType No, Body, Date) Pinpoint.  •  ABS Materials: Australian Bureau of Statistics, [Italic Title] (Catalogue No N, Date) Pinpoint.  •  Film/TV/Other Media: ['Episode', ][Italic Title] (Version, Studio, Date) Pinpoint <URL>.  •  Social Media Post: Username[, 'Title'] (Platform, Date[, Time][ TZ]) Pinpoint <URL>.",
+    formatTemplate: [
+      { label: 'Dictionary', template: "[Italic Dictionary Title] (Edition ed, Year) 'Entry' (def N)." },
+      {
+        label: 'Legal Encyclopedia',
+        template: "Publisher, [Italic Title], vol N (at Date) TitleNo Name, 'ChapterNo Name' [Paragraph].",
+      },
+      { label: 'Speech', template: "Author, 'Title' (Speech, Forum, Date) Pinpoint." },
+      { label: 'Press/Media Release', template: "Author, 'Title' (ReleaseType No, Body, Date) Pinpoint." },
+      { label: 'ABS Materials', template: 'Australian Bureau of Statistics, [Italic Title] (Catalogue No N, Date) Pinpoint.' },
+      { label: 'Film/TV/Other Media', template: "['Episode', ][Italic Title] (Version, Studio, Date) Pinpoint <URL>." },
+      { label: 'Social Media Post', template: "Username[, 'Title'] (Platform, Date[, Time][ TZ]) Pinpoint <URL>." },
+    ],
     examples: OTHER_SOURCES_EXAMPLES,
     keyRules: [
       'A dictionary/encyclopedia title is italicised, exactly like a book title — but the specific entry word or chapter name it points to is quoted, never italicised, matching a journal article or research paper title instead.',

@@ -11,9 +11,15 @@ export const metadata: Metadata = {
 export default function GuidePage() {
   return (
     <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-medium text-gray-900">AGLC4 guide</h1>
-        <p className="mt-1 text-sm text-gray-500">
+      <div className="mb-8 max-w-2xl mx-auto text-center">
+        <span className="text-sm font-bold uppercase tracking-[0.08em] text-primary">AGLC4 · 4th edition</span>
+        <h1
+          className="mt-3 text-[2.25rem] font-extrabold leading-[1.1] tracking-tight text-gray-900 sm:text-[2.5rem]"
+          style={{ textWrap: 'balance' }}
+        >
+          AGLC4 Guide
+        </h1>
+        <p className="mt-3 text-[15px] leading-relaxed text-gray-600">
           Format templates, worked examples, and the rules students get wrong most often — for all{' '}
           {GUIDE_ENTRIES.length} source types.
         </p>

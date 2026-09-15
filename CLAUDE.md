@@ -757,6 +757,34 @@ the Supabase dashboard, not in this app's code — there is nothing to change in
    setup should complete with the existing "Check your email to confirm your account…" success state
    instead of the `"Error sending confirmation email"` failure documented above.
 
+## Guide page fixes: stale header styling, multi-format templates crammed into one box
+
+The user flagged the guide page as "looking incomplete." Two real, separate issues, found by reading
+the page's own source alongside a live check in the browser (the actual worked-example content was
+already complete — all 11 source types, full examples, key rules — so "incomplete" here meant visual
+polish, not missing content):
+
+- **`app/guide/page.tsx`'s own heading had never been brought along through this session's various
+  redesign rounds** — still the small `text-2xl font-medium`, left-aligned, no kicker text, while
+  every other page (`/generate`, `/checker`, `/auth/login`, `/auth/signup`) has since converged on
+  the same kicker + `text-[2.25rem] font-extrabold` centred treatment. Brought into line with that
+  exact pattern (same `AGLC4 · 4th edition` kicker, same heading/subtitle sizing) — the page's own
+  2-column nav/content grid below the header is untouched.
+- **`GuideEntry.formatTemplate` (`lib/guide-content.ts`) was a single plain string for every source
+  type** — fine for the 9 source types with one real format, but `internationalMaterial` and
+  `otherSources` each bundle several genuinely unrelated AGLC4 formats (Treaty/UN Materials/Foreign
+  Domestic/EU Materials; Dictionary/Encyclopedia/Speech/Press Release/ABS/Film-TV/Social Media) —
+  both were represented as one long string with every format run together, separated only by a
+  literal `•` character, rendered by `GuideSection.tsx`'s `FormatTemplate` as one dense wall of text
+  with no visual separation between formats at all. `formatTemplate` is now typed
+  `string | FormatTemplateItem[]` (a new exported interface, `{ label: string; template: string }`) —
+  every other source type's entry is untouched (still a plain string), while these two now supply an
+  array of labelled templates, rendered by the updated `FormatTemplate` as a stack of small
+  individually-labelled boxes instead of one box. Purely a data-shape + rendering change — no citation
+  formatting logic anywhere in `lib/citation-engine/` was touched, since this page only ever displays
+  static reference text, never runs the actual formatters for this part (the worked examples below
+  each format box do call `generateCitationSync`, untouched).
+
 ## Deployment
 
 The GitHub repo is `github.com/rhyle-s/pinpoint` (`origin`), all work on `main`. Not deployed anywhere yet — deploying will need `vercel login` run interactively (can't be done from a non-interactive agent session).

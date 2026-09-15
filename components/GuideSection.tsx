@@ -1,11 +1,11 @@
 import Link from 'next/link'
 import { formatItalics, generateCitationSync } from '@/lib/citation-engine'
-import { GuideEntry } from '@/lib/guide-content'
+import { FormatTemplateItem, GuideEntry } from '@/lib/guide-content'
 
-function FormatTemplate({ template }: { template: string }) {
+function TemplateLine({ template }: { template: string }) {
   const parts = template.split(/([,.])/g).filter(Boolean)
   return (
-    <p className="rounded-lg bg-primary-tint px-4 py-3 font-mono text-sm leading-relaxed">
+    <p className="font-mono text-sm leading-relaxed">
       {parts.map((part, i) =>
         part === ',' || part === '.' ? (
           <span key={i} className="text-on-tint">
@@ -18,6 +18,31 @@ function FormatTemplate({ template }: { template: string }) {
         ),
       )}
     </p>
+  )
+}
+
+// Most source types have one plain-string template — a single boxed line, as before. A source
+// type bundling several unrelated AGLC4 formats (internationalMaterial, otherSources) instead
+// passes a labelled array, rendered as its own stack of small boxes rather than one wall of text
+// with every format run together.
+function FormatTemplate({ template }: { template: string | FormatTemplateItem[] }) {
+  if (typeof template === 'string') {
+    return (
+      <div className="rounded-lg bg-primary-tint px-4 py-3">
+        <TemplateLine template={template} />
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-2">
+      {template.map((item) => (
+        <div key={item.label} className="rounded-lg bg-primary-tint px-4 py-3">
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-on-tint">{item.label}</p>
+          <TemplateLine template={item.template} />
+        </div>
+      ))}
+    </div>
   )
 }
 
