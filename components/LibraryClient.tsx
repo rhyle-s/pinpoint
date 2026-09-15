@@ -97,6 +97,89 @@ function ChevronIcon({ expanded }: { expanded: boolean }) {
   )
 }
 
+// Export is now its own choice at click time (entire library vs one collection) instead of
+// silently reading whatever the collection filter above happens to be set to — that reliance is
+// what the "exports your whole library by default…" note existed to explain, and asking the
+// question directly here means the note isn't needed at all.
+function ExportMenu({ collectionNames, hasUncategorised }: { collectionNames: string[]; hasUncategorised: boolean }) {
+  const [open, setOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function handleClick(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [open])
+
+  const hasCollections = collectionNames.length > 0 || hasUncategorised
+
+  if (!hasCollections) {
+    return (
+      <a
+        href="/api/library/export"
+        className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#1D4ED8]"
+      >
+        Export bibliography (.docx)
+      </a>
+    )
+  }
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#1D4ED8]"
+      >
+        Export bibliography (.docx)
+        <ChevronIcon expanded={open} />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="absolute left-0 z-20 mt-1 w-56 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+        >
+          <a
+            href="/api/library/export"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+          >
+            Entire library
+          </a>
+          <div className="my-1 border-t border-gray-100" />
+          {collectionNames.map((name) => (
+            <a
+              key={name}
+              href={`/api/library/export?collection=${encodeURIComponent(name)}`}
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="block truncate px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+            >
+              {name}
+            </a>
+          ))}
+          {hasUncategorised && (
+            <a
+              href={`/api/library/export?collection=${encodeURIComponent(UNCATEGORISED_COLLECTION)}`}
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+            >
+              Uncategorised
+            </a>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // Small icon button shared by the row-level and expanded-detail copy/delete/collection controls —
 // text is screen-reader-only (aria-label) so the row stays dense, with a native title tooltip for
 // sighted hover users. `tone="blue"` is the resting style for the row's three action buttons
@@ -893,17 +976,7 @@ export default function LibraryClient({ userId }: { userId: string }) {
             Manage collections
           </button>
         )}
-        <a
-          href={collectionFilter === 'all' ? '/api/library/export' : `/api/library/export?collection=${encodeURIComponent(collectionFilter)}`}
-          className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#1D4ED8]"
-        >
-          Export bibliography (.docx)
-        </a>
-        {(collections.names.length > 0 || collections.hasUncategorised) && (
-          <p className="max-w-xs text-sm font-medium text-gray-600">
-            Exports your whole library by default — select a collection above first to export just that collection.
-          </p>
-        )}
+        <ExportMenu collectionNames={collections.names} hasUncategorised={collections.hasUncategorised} />
       </div>
 
       {managingCollections && (
@@ -946,9 +1019,12 @@ export default function LibraryClient({ userId }: { userId: string }) {
           </button>
         </div>
       ) : (
-        <p className="text-base font-medium text-gray-700">
-          {citations.length} {citations.length === 1 ? 'citation' : 'citations'} saved
-        </p>
+        <div className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-primary-tint py-1 pl-1 pr-3">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-white">
+            {citations.length}
+          </span>
+          <span className="text-sm font-medium text-gray-700">{citations.length === 1 ? 'citation saved' : 'citations saved'}</span>
+        </div>
       )}
 
       {citations.length === 0 ? (
