@@ -657,6 +657,12 @@ collapses two genuinely different code paths into one.
   (empty input, or mid-request) — it's still functionally disabled (`disabled:cursor-not-allowed`
   stays), only the faded look is gone; the PDF button's own `disabled:opacity-50` is untouched, since
   only Cite was called out.
+- **CTA bar background matched to the other cards.** It was `bg-gray-50` (turning `bg-white` only on
+  focus) — but the page body itself is also `bg-gray-50`, so at rest the bar was the exact same
+  colour as the page behind it and only its border set it apart, unlike the white, shadowed "Source
+  type"/details/output cards around it. Now plain `bg-white shadow-card` at all times (the same two
+  classes those other cards use), with `focus-within:bg-white` dropped since it's already white; the
+  border-colour-on-focus and ring-glow behaviour are untouched.
 
 ## Deployment
 

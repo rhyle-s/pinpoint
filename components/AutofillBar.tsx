@@ -277,7 +277,7 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
 
   return (
     <div>
-      <div className="flex items-center gap-2 rounded-full border border-gray-300 bg-gray-50 py-1.5 pl-4 pr-1.5 transition-colors focus-within:border-brand-600 focus-within:bg-white focus-within:shadow-ring-brand">
+      <div className="flex items-center gap-2 rounded-full border border-gray-300 bg-white py-1.5 pl-4 pr-1.5 shadow-card transition-colors focus-within:border-brand-600 focus-within:shadow-ring-brand">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-gray-400">
           <path d="M9 15l6-6" />
           <path d="M11 5l1-1a4 4 0 0 1 6 6l-1 1" />
