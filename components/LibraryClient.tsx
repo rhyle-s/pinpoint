@@ -981,10 +981,11 @@ export default function LibraryClient({ userId }: { userId: string }) {
 
       {managingCollections && (
         <div className="overflow-hidden rounded-xl border border-gray-300 bg-white">
-          <div className="flex flex-wrap items-center gap-1.5 border-b border-gray-200 bg-primary-tint px-4 py-3">
-            <FolderIcon className="shrink-0 text-primary" />
-            <span className="text-sm font-medium text-gray-700">Manage collections</span>
-            <span className="text-xs font-normal text-gray-400">— deleting a collection keeps its citations, just uncategorised</span>
+          <div className="border-b border-gray-200 bg-primary-tint px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">Manage collections</p>
+            <p className="mt-1 text-xs text-gray-500">
+              Deleting a collection doesn&rsquo;t delete its citations — they&rsquo;re just left uncategorised.
+            </p>
           </div>
           <ManageCollectionsPanel
             userId={userId}
@@ -1042,7 +1043,7 @@ export default function LibraryClient({ userId }: { userId: string }) {
         <div className="overflow-x-auto rounded-xl border border-gray-300 bg-white">
           <table className="w-full border-collapse text-left">
             <thead>
-              <tr className="border-b border-gray-200 bg-primary-tint text-xs font-medium text-gray-500">
+              <tr className="border-b border-gray-200 bg-primary-tint text-xs font-semibold uppercase tracking-wide text-gray-600">
                 <th className="whitespace-nowrap py-2 pl-4 pr-2">
                   <input
                     ref={selectAllRef}
@@ -1053,9 +1054,9 @@ export default function LibraryClient({ userId }: { userId: string }) {
                     className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-brand-600"
                   />
                 </th>
-                <th className="whitespace-nowrap py-2 pr-3 font-medium">Type</th>
-                <th className="py-2 pr-3 font-medium">Citation</th>
-                <th className="whitespace-nowrap py-2 pr-3 font-medium">Saved</th>
+                <th className="whitespace-nowrap py-2 pr-3">Type</th>
+                <th className="py-2 pr-3">Citation</th>
+                <th className="whitespace-nowrap py-2 pr-3">Saved</th>
                 <th className="py-2 pr-4" />
               </tr>
             </thead>
