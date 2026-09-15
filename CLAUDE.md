@@ -584,6 +584,10 @@ user picked the icon-row one. `app/generate/page.tsx`:
   less space between the trust row and the "Fill in details automatically" card below it) — the
   header's *internal* spacing (kicker→heading→subtitle→trust row) is untouched, only the gap to
   whatever comes after the header changed.
+- **Header centred.** After mocking up a SurveyMonkey-structure exploration (centred hero, oversized
+  headline, a big pill CTA bar echoing theirs) the user asked for just the plain centring, none of the
+  scale/CTA changes — the header block gained `mx-auto text-center` and the trust row's flex gained
+  `justify-center`; every element's own size/weight/colour is untouched, this is alignment only.
 
 ## Deployment
 
