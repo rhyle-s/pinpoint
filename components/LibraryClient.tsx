@@ -565,14 +565,14 @@ function ManageCollectionsPanel({
   }
 
   if (collectionCounts.length === 0) {
-    return <p className="text-sm text-gray-500">No collections yet — use the + button on a citation to create one.</p>
+    return <p className="px-4 py-6 text-center text-sm text-gray-500">No collections yet — use the + button on a citation to create one.</p>
   }
 
   return (
-    <ul className="space-y-1">
+    <ul>
       {collectionCounts.map(({ name, count }) =>
         renamingName === name ? (
-          <li key={name} className="flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-2">
+          <li key={name} className="flex items-center gap-2 border-b border-gray-200 bg-gray-50 px-4 py-3 last:border-0">
             <FolderIcon className="shrink-0 text-gray-400" />
             <input
               type="text"
@@ -599,7 +599,7 @@ function ManageCollectionsPanel({
         ) : (
           <li
             key={name}
-            className="group flex items-center justify-between gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-gray-50"
+            className="group flex items-center justify-between gap-3 border-b border-gray-200 px-4 py-3 transition-colors last:border-0 hover:bg-gray-50"
           >
             <div className="flex min-w-0 items-center gap-2">
               <FolderIcon className="shrink-0 text-gray-400" />
@@ -980,11 +980,12 @@ export default function LibraryClient({ userId }: { userId: string }) {
       </div>
 
       {managingCollections && (
-        <div className="rounded-xl border border-gray-200 p-4">
-          <p className="mb-3 flex items-center gap-1.5 text-sm font-medium text-gray-700">
+        <div className="overflow-hidden rounded-xl border border-gray-300 bg-white">
+          <div className="flex flex-wrap items-center gap-1.5 border-b border-gray-200 px-4 py-3">
             <FolderIcon className="shrink-0 text-gray-400" />
-            Manage collections <span className="font-normal text-gray-400">— deleting a collection keeps its citations, just uncategorised</span>
-          </p>
+            <span className="text-sm font-medium text-gray-700">Manage collections</span>
+            <span className="text-xs font-normal text-gray-400">— deleting a collection keeps its citations, just uncategorised</span>
+          </div>
           <ManageCollectionsPanel
             userId={userId}
             collectionCounts={collectionCounts}
