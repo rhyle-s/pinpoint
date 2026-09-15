@@ -315,6 +315,23 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
           disabled={isLoading}
           className="hidden"
         />
+
+        <button
+          type="button"
+          onClick={() => runSmartFill(value)}
+          disabled={isLoading || !value.trim()}
+          className="shrink-0 whitespace-nowrap rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#1D4ED8] disabled:cursor-not-allowed"
+        >
+          {isLoading ? (
+            <span className="flex items-center justify-center gap-2">
+              <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+              Citing…
+            </span>
+          ) : (
+            'Cite'
+          )}
+        </button>
+
         {/* Icon + text rather than an icon alone — this used to be its own circle with a "PDF"
             caption underneath it for the same reason (a hover title alone says nothing at a glance,
             and nothing at all on touch); now that it sits inline in the bar there's no room for a
@@ -341,22 +358,6 @@ export default function AutofillBar({ onAutofill, onLoadingChange }: AutofillBar
             <path d="M5 21h14" />
           </svg>
           PDF
-        </button>
-
-        <button
-          type="button"
-          onClick={() => runSmartFill(value)}
-          disabled={isLoading || !value.trim()}
-          className="shrink-0 whitespace-nowrap rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {isLoading ? (
-            <span className="flex items-center justify-center gap-2">
-              <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-              Citing…
-            </span>
-          ) : (
-            'Cite'
-          )}
         </button>
       </div>
 

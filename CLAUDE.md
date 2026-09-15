@@ -651,6 +651,12 @@ collapses two genuinely different code paths into one.
   (the three AGLC4 elements) rather than restating the mechanism a third time. "Saves to your own
   library" → "Save to library" in the trust row, tightened to match the other two entries' plain
   imperative phrasing ("Autofill from...", "Rule-checked against...").
+- **Quick follow-up: PDF after Cite, Cite never dims.** Swapped the two buttons' order (PDF was
+  between the input and Cite, Cite is now first) — pure JSX reorder, no logic touched. Cite's
+  `disabled:opacity-50` was removed so it stays full-strength `bg-primary` blue even while disabled
+  (empty input, or mid-request) — it's still functionally disabled (`disabled:cursor-not-allowed`
+  stays), only the faded look is gone; the PDF button's own `disabled:opacity-50` is untouched, since
+  only Cite was called out.
 
 ## Deployment
 
