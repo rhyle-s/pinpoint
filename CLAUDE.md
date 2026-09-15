@@ -699,6 +699,34 @@ object the way generation does), single citation only, not a whole document.
 - **`app/actions.ts`**: new `checkCitationAction(text, sourceType, form)` Server Action wrapping
   `checkCitation`, alongside the existing `validateCitationAction`.
 
+## Email + password authentication, alongside magic link
+
+`/auth/login` now has two tabs — "Sign in" (email + password, `signInWithPassword`) and "Magic link"
+(the original `signInWithOtp` flow, unchanged, just moved under its own tab) — plus three new pages:
+`/auth/signup` (`signUp`), `/auth/forgot-password` (`resetPasswordForEmail`), and
+`/auth/reset-password` (`updateUser({ password })`, landed on after clicking the email link). No
+schema change — Supabase supports both auth methods against the same `auth.users`/`profiles` tables
+already in place, so this is purely new pages plus one branch in the callback route.
+
+- **`app/auth/callback/route.ts` now branches on which kind of link was clicked**, not just the
+  original magic-link `code` param: a password-reset email sends `token_hash`+`type=recovery`
+  instead, exchanged via `verifyOtp({ token_hash, type: 'recovery' })` (a genuinely different
+  Supabase call from `exchangeCodeForSession`) and redirected to `/auth/reset-password` rather than
+  `next` — that page's `updateUser` call needs the temporary session this exchange creates, not a
+  normal signed-in redirect.
+- **Scope was kept exactly to `app/auth/`** — `components/NavBar.tsx`'s `AuthControl` needed no
+  change at all (its existing "Sign in" link already points at `/auth/login`, which now offers both
+  flows from the same URL) and nothing in the citation engine/library/autofill was touched.
+- **Supabase's own default email service is rate-limited/unconfigured for confirmation emails** —
+  confirmed live: a real `signUp()` call against the live project returns `"Error sending
+  confirmation email"` rather than completing. This is a Supabase project-configuration matter (a
+  custom SMTP provider, or working within the free tier's send limits), not a bug in this app's own
+  code — `signUp()` is being called and handled correctly; the error is surfaced verbatim via the
+  same inline-error pattern every other form on these pages uses.
+- **New Supabase redirect URL needed**: `/auth/reset-password` must be added alongside the existing
+  `/auth/callback` in Supabase → Authentication → URL Configuration (both `localhost:3001` for dev
+  and the eventual production domain) — the reset-password email link won't work without it.
+
 ## Deployment
 
 The GitHub repo is `github.com/rhyle-s/pinpoint` (`origin`), all work on `main`. Not deployed anywhere yet — deploying will need `vercel login` run interactively (can't be done from a non-interactive agent session).
