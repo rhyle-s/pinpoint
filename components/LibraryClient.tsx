@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { formatItalics } from '@/lib/citation-engine'
 import { SourceType } from '@/lib/citation-engine/types'
 import { SOURCE_TYPE_LABELS, SOURCE_TYPE_PILL_CLASSES, SavedCitation, UNCATEGORISED_COLLECTION } from '@/lib/library-types'
@@ -261,8 +261,10 @@ function CitationRow({
   expanded,
   showCollectionEditor,
   collectionOptions,
+  selected,
   onToggle,
   onToggleCollectionEditor,
+  onToggleSelect,
   onDeleted,
   onLabelChanged,
 }: {
@@ -270,8 +272,10 @@ function CitationRow({
   expanded: boolean
   showCollectionEditor: boolean
   collectionOptions: string[]
+  selected: boolean
   onToggle: () => void
   onToggleCollectionEditor: () => void
+  onToggleSelect: () => void
   onDeleted: (id: string) => void
   onLabelChanged: (id: string, label: string | null) => void
 }) {
@@ -317,7 +321,16 @@ function CitationRow({
   return (
     <>
       <tr onClick={onToggle} className="cursor-pointer border-b border-gray-200 last:border-0 hover:bg-gray-50">
-        <td className="whitespace-nowrap py-2.5 pl-4 pr-3">
+        <td className="whitespace-nowrap py-2.5 pl-4 pr-2" onClick={(e) => e.stopPropagation()}>
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={onToggleSelect}
+            aria-label={`Select ${formatItalics(citation.bibliography_text, 'plain')}`}
+            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-brand-600"
+          />
+        </td>
+        <td className="whitespace-nowrap py-2.5 pr-3">
           <div className="flex flex-wrap items-center gap-1">
             <span
               className={`inline-flex w-fit items-center rounded-full px-2 py-0.5 text-xs font-medium ${SOURCE_TYPE_PILL_CLASSES[citation.source_type]}`}
@@ -365,7 +378,7 @@ function CitationRow({
       </tr>
       {showCollectionEditor && (
         <tr className="border-b border-gray-200 bg-primary-tint last:border-0">
-          <td colSpan={4} className="px-4 py-1">
+          <td colSpan={5} className="px-4 py-1">
             <CollectionEditor
               citation={citation}
               collectionOptions={collectionOptions}
@@ -377,7 +390,7 @@ function CitationRow({
       )}
       {expanded && (
         <tr className="border-b border-gray-200 bg-gray-50 last:border-0">
-          <td colSpan={4} className="px-4 py-1">
+          <td colSpan={5} className="px-4 py-1">
             <div className="divide-y divide-gray-200">
               <DetailPanel label="Footnote citation" text={citation.footnote_text} html={citation.footnote_html} />
               {citation.subsequent_text && (
@@ -395,16 +408,24 @@ function CitationRow({
 // "Delete" here means removing the collection as a grouping, not the citations in it — every
 // citation that had this label goes back to "No collection" (label: null), same end state as if
 // each had been individually un-assigned via CollectionEditor, just done in one bulk update
-// instead of one row at a time.
+// instead of one row at a time. Rename is the same shape, bulk-updating every row's label from the
+// old name to the new one in one call.
 function ManageCollectionsPanel({
+  userId,
   collectionCounts,
   onCollectionDeleted,
+  onCollectionRenamed,
 }: {
+  userId: string
   collectionCounts: { name: string; count: number }[]
   onCollectionDeleted: (name: string) => void
+  onCollectionRenamed: (oldName: string, newName: string) => void
 }) {
   const [confirmingName, setConfirmingName] = useState<string | null>(null)
   const [deletingName, setDeletingName] = useState<string | null>(null)
+  const [renamingName, setRenamingName] = useState<string | null>(null)
+  const [renameValue, setRenameValue] = useState('')
+  const [savingRename, setSavingRename] = useState(false)
 
   async function handleDelete(name: string) {
     if (confirmingName !== name) {
@@ -414,18 +435,34 @@ function ManageCollectionsPanel({
 
     setDeletingName(name)
     const supabase = createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) {
-      setDeletingName(null)
-      return
-    }
-
-    const { error } = await supabase.from('citations').update({ label: null }).eq('user_id', user.id).eq('label', name)
+    const { error } = await supabase.from('citations').update({ label: null }).eq('user_id', userId).eq('label', name)
     setDeletingName(null)
     setConfirmingName(null)
     if (!error) onCollectionDeleted(name)
+  }
+
+  function startRename(name: string) {
+    setRenamingName(name)
+    setRenameValue(name)
+  }
+
+  async function handleConfirmRename(oldName: string) {
+    const trimmed = renameValue.trim()
+    if (!trimmed || trimmed === oldName) {
+      setRenamingName(null)
+      return
+    }
+
+    setSavingRename(true)
+    const supabase = createClient()
+    const { error } = await supabase
+      .from('citations')
+      .update({ label: trimmed })
+      .eq('user_id', userId)
+      .eq('label', oldName)
+    setSavingRename(false)
+    setRenamingName(null)
+    if (!error) onCollectionRenamed(oldName, trimmed)
   }
 
   if (collectionCounts.length === 0) {
@@ -434,26 +471,146 @@ function ManageCollectionsPanel({
 
   return (
     <ul className="divide-y divide-gray-200">
-      {collectionCounts.map(({ name, count }) => (
-        <li key={name} className="flex items-center justify-between gap-3 py-2">
-          <span className="text-sm text-gray-900">
-            {name} <span className="text-gray-400">({count})</span>
-          </span>
-          <button
-            type="button"
-            onClick={() => handleDelete(name)}
-            disabled={deletingName === name}
-            className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-              confirmingName === name
-                ? 'border-red-200 bg-red-50 text-red-600'
-                : 'border-gray-200 text-gray-600 hover:border-gray-300'
-            }`}
-          >
-            {deletingName === name ? 'Removing…' : confirmingName === name ? 'Are you sure?' : 'Delete collection'}
-          </button>
-        </li>
-      ))}
+      {collectionCounts.map(({ name, count }) =>
+        renamingName === name ? (
+          <li key={name} className="flex items-center gap-2 py-2">
+            <input
+              type="text"
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              autoFocus
+              className="min-w-[160px] flex-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-brand-600 focus:outline-none focus:shadow-ring-brand"
+            />
+            <button
+              type="button"
+              onClick={() => handleConfirmRename(name)}
+              disabled={savingRename || !renameValue.trim()}
+              className="rounded-md border border-brand-200 bg-primary-tint px-2.5 py-1 text-xs font-medium text-primary transition-colors hover:bg-brand-100 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {savingRename ? 'Saving…' : 'Save'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setRenamingName(null)}
+              className="rounded-md border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600 hover:border-gray-300"
+            >
+              Cancel
+            </button>
+          </li>
+        ) : (
+          <li key={name} className="flex items-center justify-between gap-3 py-2">
+            <span className="text-sm text-gray-900">
+              {name} <span className="text-gray-400">({count})</span>
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => startRename(name)}
+                className="rounded-md border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600 hover:border-gray-300"
+              >
+                Rename
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDelete(name)}
+                disabled={deletingName === name}
+                className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                  confirmingName === name
+                    ? 'border-red-200 bg-red-50 text-red-600'
+                    : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                }`}
+              >
+                {deletingName === name ? 'Removing…' : confirmingName === name ? 'Are you sure?' : 'Delete collection'}
+              </button>
+            </div>
+          </li>
+        ),
+      )}
     </ul>
+  )
+}
+
+// Same dropdown-or-create shape as CollectionEditor, but applies to every selected citation at
+// once via onAssign rather than one row's own PATCH — deliberately doesn't pre-fill a "current"
+// value the way CollectionEditor does, since a multi-selection can span citations that already
+// have different (or no) collections.
+function BulkCollectionAssigner({
+  count,
+  collectionOptions,
+  onAssign,
+}: {
+  count: number
+  collectionOptions: string[]
+  onAssign: (label: string | null) => Promise<void>
+}) {
+  const hasExisting = collectionOptions.length > 0
+  const [mode, setMode] = useState<'select' | 'create'>(hasExisting ? 'select' : 'create')
+  const [value, setValue] = useState('')
+  const [applying, setApplying] = useState(false)
+
+  async function handleApply() {
+    setApplying(true)
+    await onAssign(value.trim() || null)
+    setApplying(false)
+  }
+
+  function handleSelectChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    if (e.target.value === CREATE_NEW_VALUE) {
+      setMode('create')
+      setValue('')
+    } else {
+      setValue(e.target.value)
+    }
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {mode === 'select' ? (
+        <select
+          value={value}
+          onChange={handleSelectChange}
+          className="min-w-[160px] rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-brand-600 focus:outline-none focus:shadow-ring-brand"
+        >
+          <option value="">No collection</option>
+          {collectionOptions.map((name) => (
+            <option key={name} value={name}>
+              {name}
+            </option>
+          ))}
+          <option value={CREATE_NEW_VALUE}>+ Create new collection…</option>
+        </select>
+      ) : (
+        <>
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder="eg Torts Assessment 2"
+            className="min-w-[160px] rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-brand-600 focus:outline-none focus:shadow-ring-brand"
+          />
+          {hasExisting && (
+            <button
+              type="button"
+              onClick={() => {
+                setMode('select')
+                setValue('')
+              }}
+              className="text-xs font-medium text-gray-500 hover:text-gray-700"
+            >
+              Choose existing
+            </button>
+          )}
+        </>
+      )}
+      <button
+        type="button"
+        onClick={handleApply}
+        disabled={applying}
+        className="rounded-lg border border-brand-200 bg-primary-tint px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-brand-100 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {applying ? 'Applying…' : `Assign ${count} to collection`}
+      </button>
+    </div>
   )
 }
 
@@ -467,6 +624,26 @@ export default function LibraryClient({ userId }: { userId: string }) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [collectionEditorId, setCollectionEditorId] = useState<string | null>(null)
   const [managingCollections, setManagingCollections] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [confirmingBulkDelete, setConfirmingBulkDelete] = useState(false)
+  const [bulkDeleting, setBulkDeleting] = useState(false)
+  const selectAllRef = useRef<HTMLInputElement>(null)
+
+  // If the selection itself changes while a bulk-delete confirm is pending, drop the pending
+  // confirm rather than let a second click delete a different set than the one that was confirmed.
+  useEffect(() => {
+    setConfirmingBulkDelete(false)
+  }, [selectedIds])
+
+  // Drops any selected id that no longer exists (deleted here, deleted elsewhere and synced via
+  // realtime, etc) — without this a stale id sits invisibly in the set, e.g. making "3 selected"
+  // read wrong after one of those 3 was removed by some other route.
+  useEffect(() => {
+    setSelectedIds((prev) => {
+      const next = new Set(Array.from(prev).filter((id) => citations.some((c) => c.id === id)))
+      return next.size === prev.size ? prev : next
+    })
+  }, [citations])
 
   useEffect(() => {
     const supabase = createClient()
@@ -537,6 +714,11 @@ export default function LibraryClient({ userId }: { userId: string }) {
     setCollectionFilter((current) => (current === name ? 'all' : current))
   }
 
+  function handleCollectionRenamed(oldName: string, newName: string) {
+    setCitations((prev) => prev.map((c) => (c.label === oldName ? { ...c, label: newName } : c)))
+    setCollectionFilter((current) => (current === oldName ? newName : current))
+  }
+
   // Distinct collection names actually present, alphabetised — drives both the filter dropdown's
   // options and whether "Uncategorised" is worth offering at all (only if some citation has no
   // label yet).
@@ -574,6 +756,68 @@ export default function LibraryClient({ userId }: { userId: string }) {
 
     return list
   }, [citations, search, sort, typeFilter, collectionFilter])
+
+  const allVisibleSelected = visibleCitations.length > 0 && visibleCitations.every((c) => selectedIds.has(c.id))
+  const someVisibleSelected = visibleCitations.some((c) => selectedIds.has(c.id))
+
+  // Native <input type="checkbox"> has no JSX prop for the indeterminate visual state — it's only
+  // settable imperatively via the DOM node.
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = someVisibleSelected && !allVisibleSelected
+    }
+  }, [someVisibleSelected, allVisibleSelected])
+
+  function handleToggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  // "Select all" only ever acts on the currently visible (filtered/searched) rows, not the whole
+  // library — selecting everything while a search is active shouldn't silently reach outside it.
+  function handleToggleSelectAll() {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (allVisibleSelected) {
+        visibleCitations.forEach((c) => next.delete(c.id))
+      } else {
+        visibleCitations.forEach((c) => next.add(c.id))
+      }
+      return next
+    })
+  }
+
+  async function handleBulkAssign(label: string | null) {
+    const ids = Array.from(selectedIds)
+    const supabase = createClient()
+    const { error } = await supabase.from('citations').update({ label }).in('id', ids)
+    if (!error) {
+      setCitations((prev) => prev.map((c) => (selectedIds.has(c.id) ? { ...c, label } : c)))
+      setSelectedIds(new Set())
+    }
+  }
+
+  async function handleBulkDelete() {
+    if (!confirmingBulkDelete) {
+      setConfirmingBulkDelete(true)
+      return
+    }
+
+    setBulkDeleting(true)
+    const ids = Array.from(selectedIds)
+    const supabase = createClient()
+    const { error } = await supabase.from('citations').delete().in('id', ids)
+    setBulkDeleting(false)
+    setConfirmingBulkDelete(false)
+    if (!error) {
+      setCitations((prev) => prev.filter((c) => !selectedIds.has(c.id)))
+      setSelectedIds(new Set())
+    }
+  }
 
   if (loading) {
     return <p className="text-sm text-gray-500">Loading your library…</p>
@@ -647,13 +891,44 @@ export default function LibraryClient({ userId }: { userId: string }) {
           <p className="mb-2 text-sm font-medium text-gray-700">
             Manage collections <span className="font-normal text-gray-400">— deleting a collection keeps its citations, just uncategorised</span>
           </p>
-          <ManageCollectionsPanel collectionCounts={collectionCounts} onCollectionDeleted={handleCollectionDeleted} />
+          <ManageCollectionsPanel
+            userId={userId}
+            collectionCounts={collectionCounts}
+            onCollectionDeleted={handleCollectionDeleted}
+            onCollectionRenamed={handleCollectionRenamed}
+          />
         </div>
       )}
 
-      <p className="text-sm text-gray-500">
-        {citations.length} {citations.length === 1 ? 'citation' : 'citations'} saved
-      </p>
+      {selectedIds.size > 0 ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-brand-200 bg-primary-tint p-3">
+          <span className="text-sm font-medium text-gray-700">{selectedIds.size} selected</span>
+          <BulkCollectionAssigner count={selectedIds.size} collectionOptions={collections.names} onAssign={handleBulkAssign} />
+          <button
+            type="button"
+            onClick={handleBulkDelete}
+            disabled={bulkDeleting}
+            className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+              confirmingBulkDelete
+                ? 'border-red-200 bg-red-50 text-red-600'
+                : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+            }`}
+          >
+            {bulkDeleting ? 'Deleting…' : confirmingBulkDelete ? 'Are you sure?' : 'Delete selected'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedIds(new Set())}
+            className="text-sm font-medium text-gray-500 hover:text-gray-700"
+          >
+            Clear selection
+          </button>
+        </div>
+      ) : (
+        <p className="text-sm text-gray-500">
+          {citations.length} {citations.length === 1 ? 'citation' : 'citations'} saved
+        </p>
+      )}
 
       {citations.length === 0 ? (
         <div className="rounded-xl border border-gray-200 p-8 text-center">
@@ -670,7 +945,17 @@ export default function LibraryClient({ userId }: { userId: string }) {
           <table className="w-full border-collapse text-left">
             <thead>
               <tr className="border-b border-gray-200 text-xs font-medium text-gray-500">
-                <th className="whitespace-nowrap py-2 pl-4 pr-3 font-medium">Type</th>
+                <th className="whitespace-nowrap py-2 pl-4 pr-2">
+                  <input
+                    ref={selectAllRef}
+                    type="checkbox"
+                    checked={allVisibleSelected}
+                    onChange={handleToggleSelectAll}
+                    aria-label="Select all visible citations"
+                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-brand-600"
+                  />
+                </th>
+                <th className="whitespace-nowrap py-2 pr-3 font-medium">Type</th>
                 <th className="py-2 pr-3 font-medium">Citation</th>
                 <th className="whitespace-nowrap py-2 pr-3 font-medium">Saved</th>
                 <th className="py-2 pr-4" />
@@ -684,10 +969,12 @@ export default function LibraryClient({ userId }: { userId: string }) {
                   expanded={expandedId === citation.id}
                   showCollectionEditor={collectionEditorId === citation.id}
                   collectionOptions={collections.names}
+                  selected={selectedIds.has(citation.id)}
                   onToggle={() => setExpandedId((current) => (current === citation.id ? null : citation.id))}
                   onToggleCollectionEditor={() =>
                     setCollectionEditorId((current) => (current === citation.id ? null : citation.id))
                   }
+                  onToggleSelect={() => handleToggleSelect(citation.id)}
                   onDeleted={handleDeleted}
                   onLabelChanged={handleLabelChanged}
                 />
