@@ -55,7 +55,12 @@ export const UNCATEGORISED_COLLECTION = '__uncategorised__'
 // Tailwind class pairs (bg/text) for the source-type pill on each library card — one per
 // SourceType, not the fictional 8-category list from the original feature spec.
 export const SOURCE_TYPE_PILL_CLASSES: Record<SourceType, string> = {
-  case: 'bg-primary-tint text-primary',
+  // Not blue — the library table's collection-tag pill (next to the citation, when it belongs to
+  // one) uses bg-primary-tint/text-primary, so Cases needed its own colour to stay distinguishable
+  // from that rather than the two blue pills sitting side by side on the same row. Rose rather than
+  // a blue-adjacent hue (indigo/sky/teal) or purple-adjacent one (already Journal Article's colour)
+  // — stays clearly distinct from both at a glance, not just technically a different shade.
+  case: 'bg-rose-50 text-rose-700',
   legislation: 'bg-emerald-50 text-emerald-700',
   journal: 'bg-purple-50 text-purple-700',
   book: 'bg-amber-50 text-amber-700',

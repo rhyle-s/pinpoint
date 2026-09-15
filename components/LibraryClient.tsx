@@ -437,7 +437,7 @@ function CitationRow({
               {SOURCE_TYPE_LABELS[citation.source_type]}
             </span>
             {citation.label && (
-              <span className="inline-flex w-fit items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
+              <span className="inline-flex w-fit items-center rounded-full bg-primary-tint px-2 py-0.5 text-xs font-medium text-primary">
                 {citation.label}
               </span>
             )}
@@ -982,7 +982,7 @@ export default function LibraryClient({ userId }: { userId: string }) {
       {managingCollections && (
         <div className="overflow-hidden rounded-xl border border-gray-300 bg-white">
           <div className="border-b border-gray-200 bg-primary-tint px-4 py-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">Manage collections</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-900">Manage collections</p>
             <p className="mt-1 text-xs text-gray-500">
               Deleting a collection doesn&rsquo;t delete its citations — they&rsquo;re just left uncategorised.
             </p>
@@ -1043,7 +1043,7 @@ export default function LibraryClient({ userId }: { userId: string }) {
         <div className="overflow-x-auto rounded-xl border border-gray-300 bg-white">
           <table className="w-full border-collapse text-left">
             <thead>
-              <tr className="border-b border-gray-200 bg-primary-tint text-xs font-semibold uppercase tracking-wide text-gray-600">
+              <tr className="border-b border-gray-200 bg-primary-tint text-xs font-semibold uppercase tracking-wide text-gray-900">
                 <th className="whitespace-nowrap py-2 pl-4 pr-2">
                   <input
                     ref={selectAllRef}
