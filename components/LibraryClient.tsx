@@ -899,13 +899,12 @@ export default function LibraryClient({ userId }: { userId: string }) {
         >
           Export bibliography (.docx)
         </a>
+        {(collections.names.length > 0 || collections.hasUncategorised) && (
+          <p className="max-w-xs text-sm font-medium text-gray-600">
+            Exports your whole library by default — select a collection above first to export just that collection.
+          </p>
+        )}
       </div>
-
-      {(collections.names.length > 0 || collections.hasUncategorised) && (
-        <p className="-mt-3 text-sm font-medium text-gray-600">
-          Exports your whole library by default — select a collection above first to export just that collection.
-        </p>
-      )}
 
       {managingCollections && (
         <div className="rounded-xl border border-gray-200 p-4">
