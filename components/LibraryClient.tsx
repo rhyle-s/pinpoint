@@ -971,7 +971,12 @@ export default function LibraryClient({ userId }: { userId: string }) {
           <button
             type="button"
             onClick={() => setManagingCollections((v) => !v)}
-            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-gray-400"
+            aria-pressed={managingCollections}
+            className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+              managingCollections
+                ? 'border-brand-200 bg-primary-tint text-primary hover:bg-brand-100'
+                : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+            }`}
           >
             Manage collections
           </button>
