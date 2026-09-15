@@ -573,7 +573,7 @@ function ManageCollectionsPanel({
       {collectionCounts.map(({ name, count }) =>
         renamingName === name ? (
           <li key={name} className="flex items-center gap-2 border-b border-gray-200 bg-gray-50 px-4 py-3 last:border-0">
-            <FolderIcon className="shrink-0 text-gray-400" />
+            <FolderIcon className="shrink-0 text-primary" />
             <input
               type="text"
               value={renameValue}
@@ -602,7 +602,7 @@ function ManageCollectionsPanel({
             className="group flex items-center justify-between gap-3 border-b border-gray-200 px-4 py-3 transition-colors last:border-0 hover:bg-gray-50"
           >
             <div className="flex min-w-0 items-center gap-2">
-              <FolderIcon className="shrink-0 text-gray-400" />
+              <FolderIcon className="shrink-0 text-primary" />
               <span className="truncate text-sm font-medium text-gray-900">{name}</span>
               <span className="inline-flex w-fit shrink-0 items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
                 {count}
@@ -981,8 +981,8 @@ export default function LibraryClient({ userId }: { userId: string }) {
 
       {managingCollections && (
         <div className="overflow-hidden rounded-xl border border-gray-300 bg-white">
-          <div className="flex flex-wrap items-center gap-1.5 border-b border-gray-200 px-4 py-3">
-            <FolderIcon className="shrink-0 text-gray-400" />
+          <div className="flex flex-wrap items-center gap-1.5 border-b border-gray-200 bg-primary-tint px-4 py-3">
+            <FolderIcon className="shrink-0 text-primary" />
             <span className="text-sm font-medium text-gray-700">Manage collections</span>
             <span className="text-xs font-normal text-gray-400">— deleting a collection keeps its citations, just uncategorised</span>
           </div>
@@ -1042,7 +1042,7 @@ export default function LibraryClient({ userId }: { userId: string }) {
         <div className="overflow-x-auto rounded-xl border border-gray-300 bg-white">
           <table className="w-full border-collapse text-left">
             <thead>
-              <tr className="border-b border-gray-200 text-xs font-medium text-gray-500">
+              <tr className="border-b border-gray-200 bg-primary-tint text-xs font-medium text-gray-500">
                 <th className="whitespace-nowrap py-2 pl-4 pr-2">
                   <input
                     ref={selectAllRef}
