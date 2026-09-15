@@ -632,188 +632,190 @@ export default function Generator({ initialSourceType }: GeneratorProps) {
           : undefined
 
   return (
-    <div className="grid items-start gap-6 lg:grid-cols-[1fr_400px]">
-      <div className="space-y-6">
-        <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-card sm:p-6">
-          <div className="mb-4 flex items-center gap-2.5">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-tint text-primary">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3z" />
-                <path d="M19 14l.8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8L19 14z" />
-              </svg>
-            </span>
-            <h2 className="text-[13px] font-bold uppercase tracking-wide text-gray-900">Fill in details automatically</h2>
-          </div>
-          <AutofillBar onAutofill={handleAutofill} onLoadingChange={setAutofillLoading} />
-        </section>
-
-        {autofillNotice && (
-          <div className="flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              className="mt-0.5 shrink-0 text-amber-600"
-            >
-              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
-              <path d="M12 9v4" />
-              <path d="M12 17h.01" />
+    <div className="space-y-6">
+      <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-card sm:p-6">
+        <div className="mb-4 flex items-center gap-2.5">
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-tint text-primary">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3z" />
+              <path d="M19 14l.8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8L19 14z" />
             </svg>
-            <div className="min-w-0 flex-1 space-y-1">
-              {autofillNotice.message ? (
-                <p className="text-amber-700">{autofillNotice.message}</p>
-              ) : autofillNotice.review ? (
-                <p className="font-medium text-amber-800">
-                  Autofilled — check the fields against the source before relying on them.
-                </p>
-              ) : null}
-              {autofillNotice.verifyUrl && (
-                <a
-                  href={autofillNotice.verifyUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 font-medium text-primary underline hover:text-[#1D4ED8]"
-                >
-                  Open the source to check it&rsquo;s the right work
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M7 17 17 7" />
-                    <path d="M7 7h10v10" />
-                  </svg>
-                </a>
-              )}
+          </span>
+          <h2 className="text-[13px] font-bold uppercase tracking-wide text-gray-900">Fill in details automatically</h2>
+        </div>
+        <AutofillBar onAutofill={handleAutofill} onLoadingChange={setAutofillLoading} />
+      </section>
+
+      {autofillNotice && (
+        <div className="flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="mt-0.5 shrink-0 text-amber-600"
+          >
+            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+            <path d="M12 9v4" />
+            <path d="M12 17h.01" />
+          </svg>
+          <div className="min-w-0 flex-1 space-y-1">
+            {autofillNotice.message ? (
+              <p className="text-amber-700">{autofillNotice.message}</p>
+            ) : autofillNotice.review ? (
+              <p className="font-medium text-amber-800">
+                Autofilled — check the fields against the source before relying on them.
+              </p>
+            ) : null}
+            {autofillNotice.verifyUrl && (
+              <a
+                href={autofillNotice.verifyUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 font-medium text-primary underline hover:text-[#1D4ED8]"
+              >
+                Open the source to check it&rsquo;s the right work
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M7 17 17 7" />
+                  <path d="M7 7h10v10" />
+                </svg>
+              </a>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => setAutofillNotice(null)}
+            aria-label="Dismiss"
+            className="-mr-1 shrink-0 text-amber-400 transition-colors hover:text-amber-700"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      <div className="grid items-start gap-6 lg:grid-cols-[1fr_400px]">
+        <div className="space-y-6">
+          <SourceTypeSelector selected={selectedSourceType} onSelect={handleSourceTypeSelect} />
+
+          <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-card sm:p-6">
+            <h2 className="mb-4 text-[13px] font-bold uppercase tracking-wide text-gray-900">
+              {SOURCE_TYPE_LABELS[selectedSourceType]} details
+            </h2>
+            {selectedSourceType === 'case' && (
+              <CaseForm
+                fields={caseFields}
+                onChange={(fields) => {
+                  markFieldsTouched('case', changedKeys(caseFields, fields))
+                  setCaseFields(fields)
+                }}
+              />
+            )}
+            {selectedSourceType === 'legislation' && (
+              <LegislationForm
+                fields={legislationFields}
+                onChange={(fields) => {
+                  markFieldsTouched('legislation', changedKeys(legislationFields, fields))
+                  setLegislationFields(fields)
+                }}
+              />
+            )}
+            {selectedSourceType === 'journal' && (
+              <JournalForm
+                fields={journalFields}
+                onChange={(fields) => {
+                  markFieldsTouched('journal', changedKeys(journalFields, fields))
+                  setJournalFields(fields)
+                }}
+              />
+            )}
+            {selectedSourceType === 'book' && (
+              <BookForm
+                fields={bookFields}
+                onChange={(fields) => {
+                  markFieldsTouched('book', changedKeys(bookFields, fields))
+                  setBookFields(fields)
+                }}
+              />
+            )}
+            {selectedSourceType === 'report' && (
+              <ReportForm
+                fields={reportFields}
+                onChange={(fields) => {
+                  markFieldsTouched('report', changedKeys(reportFields, fields))
+                  setReportFields(fields)
+                }}
+              />
+            )}
+            {selectedSourceType === 'researchPaper' && (
+              <ResearchPaperForm
+                fields={researchPaperFields}
+                onChange={(fields) => {
+                  markFieldsTouched('researchPaper', changedKeys(researchPaperFields, fields))
+                  setResearchPaperFields(fields)
+                }}
+              />
+            )}
+            {selectedSourceType === 'website' && (
+              <WebsiteForm
+                fields={websiteFields}
+                onChange={(fields) => {
+                  markFieldsTouched('website', changedKeys(websiteFields, fields))
+                  setWebsiteFields(fields)
+                }}
+              />
+            )}
+            {selectedSourceType === 'newspaper' && (
+              <NewspaperForm
+                fields={newspaperFields}
+                onChange={(fields) => {
+                  markFieldsTouched('newspaper', changedKeys(newspaperFields, fields))
+                  setNewspaperFields(fields)
+                }}
+              />
+            )}
+            {selectedSourceType === 'otherLegislativeMaterial' && (
+              <OtherLegislativeMaterialForm
+                fields={otherLegislativeMaterialFields}
+                onChange={(fields) => {
+                  markFieldsTouched('otherLegislativeMaterial', changedKeys(otherLegislativeMaterialFields, fields))
+                  setOtherLegislativeMaterialFields(fields)
+                }}
+              />
+            )}
+            {selectedSourceType === 'internationalMaterial' && (
+              <InternationalMaterialForm
+                fields={internationalMaterialFields}
+                onChange={(fields) => {
+                  markFieldsTouched('internationalMaterial', changedKeys(internationalMaterialFields, fields))
+                  setInternationalMaterialFields(fields)
+                }}
+              />
+            )}
+            {selectedSourceType === 'otherSources' && (
+              <OtherSourcesForm
+                fields={otherSourcesFields}
+                onChange={(fields) => {
+                  markFieldsTouched('otherSources', changedKeys(otherSourcesFields, fields))
+                  setOtherSourcesFields(fields)
+                }}
+              />
+            )}
+          </section>
+        </div>
+
+        <div className="space-y-4 lg:sticky lg:top-24">
+          <CitationOutput result={result} validating={validating || autofillLoading} rules={rules} badge={badge} />
+          {currentFields && (
+            <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-gray-200 bg-white p-3 shadow-card">
+              <SaveToLibraryButton sourceType={selectedSourceType} fields={currentFields} result={result} />
             </div>
-            <button
-              type="button"
-              onClick={() => setAutofillNotice(null)}
-              aria-label="Dismiss"
-              className="-mr-1 shrink-0 text-amber-400 transition-colors hover:text-amber-700"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M18 6 6 18" />
-                <path d="m6 6 12 12" />
-              </svg>
-            </button>
-          </div>
-        )}
-
-        <SourceTypeSelector selected={selectedSourceType} onSelect={handleSourceTypeSelect} />
-
-        <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-card sm:p-6">
-          <h2 className="mb-4 text-[13px] font-bold uppercase tracking-wide text-gray-900">
-            {SOURCE_TYPE_LABELS[selectedSourceType]} details
-          </h2>
-          {selectedSourceType === 'case' && (
-            <CaseForm
-              fields={caseFields}
-              onChange={(fields) => {
-                markFieldsTouched('case', changedKeys(caseFields, fields))
-                setCaseFields(fields)
-              }}
-            />
           )}
-          {selectedSourceType === 'legislation' && (
-            <LegislationForm
-              fields={legislationFields}
-              onChange={(fields) => {
-                markFieldsTouched('legislation', changedKeys(legislationFields, fields))
-                setLegislationFields(fields)
-              }}
-            />
-          )}
-          {selectedSourceType === 'journal' && (
-            <JournalForm
-              fields={journalFields}
-              onChange={(fields) => {
-                markFieldsTouched('journal', changedKeys(journalFields, fields))
-                setJournalFields(fields)
-              }}
-            />
-          )}
-          {selectedSourceType === 'book' && (
-            <BookForm
-              fields={bookFields}
-              onChange={(fields) => {
-                markFieldsTouched('book', changedKeys(bookFields, fields))
-                setBookFields(fields)
-              }}
-            />
-          )}
-          {selectedSourceType === 'report' && (
-            <ReportForm
-              fields={reportFields}
-              onChange={(fields) => {
-                markFieldsTouched('report', changedKeys(reportFields, fields))
-                setReportFields(fields)
-              }}
-            />
-          )}
-          {selectedSourceType === 'researchPaper' && (
-            <ResearchPaperForm
-              fields={researchPaperFields}
-              onChange={(fields) => {
-                markFieldsTouched('researchPaper', changedKeys(researchPaperFields, fields))
-                setResearchPaperFields(fields)
-              }}
-            />
-          )}
-          {selectedSourceType === 'website' && (
-            <WebsiteForm
-              fields={websiteFields}
-              onChange={(fields) => {
-                markFieldsTouched('website', changedKeys(websiteFields, fields))
-                setWebsiteFields(fields)
-              }}
-            />
-          )}
-          {selectedSourceType === 'newspaper' && (
-            <NewspaperForm
-              fields={newspaperFields}
-              onChange={(fields) => {
-                markFieldsTouched('newspaper', changedKeys(newspaperFields, fields))
-                setNewspaperFields(fields)
-              }}
-            />
-          )}
-          {selectedSourceType === 'otherLegislativeMaterial' && (
-            <OtherLegislativeMaterialForm
-              fields={otherLegislativeMaterialFields}
-              onChange={(fields) => {
-                markFieldsTouched('otherLegislativeMaterial', changedKeys(otherLegislativeMaterialFields, fields))
-                setOtherLegislativeMaterialFields(fields)
-              }}
-            />
-          )}
-          {selectedSourceType === 'internationalMaterial' && (
-            <InternationalMaterialForm
-              fields={internationalMaterialFields}
-              onChange={(fields) => {
-                markFieldsTouched('internationalMaterial', changedKeys(internationalMaterialFields, fields))
-                setInternationalMaterialFields(fields)
-              }}
-            />
-          )}
-          {selectedSourceType === 'otherSources' && (
-            <OtherSourcesForm
-              fields={otherSourcesFields}
-              onChange={(fields) => {
-                markFieldsTouched('otherSources', changedKeys(otherSourcesFields, fields))
-                setOtherSourcesFields(fields)
-              }}
-            />
-          )}
-        </section>
-      </div>
-
-      <div className="space-y-4 lg:sticky lg:top-24">
-        <CitationOutput result={result} validating={validating || autofillLoading} rules={rules} badge={badge} />
-        {currentFields && (
-          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-gray-200 bg-white p-3 shadow-card">
-            <SaveToLibraryButton sourceType={selectedSourceType} fields={currentFields} result={result} />
-          </div>
-        )}
+        </div>
       </div>
     </div>
   )

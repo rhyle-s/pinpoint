@@ -3,13 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { formatItalics } from '@/lib/citation-engine'
 import { SourceType } from '@/lib/citation-engine/types'
-import {
-  SOURCE_TYPE_ACCENT_CLASSES,
-  SOURCE_TYPE_LABELS,
-  SOURCE_TYPE_PILL_CLASSES,
-  SavedCitation,
-  UNCATEGORISED_COLLECTION,
-} from '@/lib/library-types'
+import { SOURCE_TYPE_LABELS, SOURCE_TYPE_PILL_CLASSES, SavedCitation, UNCATEGORISED_COLLECTION } from '@/lib/library-types'
 import { createClient } from '@/lib/supabase/client'
 
 type SortOption = 'newest' | 'oldest' | 'type-az'
@@ -454,10 +448,7 @@ function CitationRow({
 
   return (
     <>
-      <tr
-        onClick={onToggle}
-        className={`cursor-pointer border-b border-l-4 border-gray-200 last:border-b-0 hover:bg-gray-50 ${SOURCE_TYPE_ACCENT_CLASSES[citation.source_type]}`}
-      >
+      <tr onClick={onToggle} className="cursor-pointer border-b border-gray-200 last:border-0 hover:bg-gray-50">
         <td className="whitespace-nowrap py-2.5 pl-4 pr-2" onClick={(e) => e.stopPropagation()}>
           <input
             type="checkbox"
@@ -1134,39 +1125,28 @@ export default function LibraryClient({ userId }: { userId: string }) {
         )}
 
         {citations.length > 0 && visibleCitations.length !== 0 && (
-          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-gray-200 bg-white p-2 shadow-xs">
-            <button
-              type="button"
-              onClick={() => setTypeFilter('all')}
-              className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
-                typeFilter === 'all' ? 'bg-gray-900 text-white' : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
-              }`}
+          <div className="flex flex-wrap items-center gap-3">
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value as TypeFilter)}
+              className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-brand-600 focus:shadow-ring-brand"
             >
-              All types
-            </button>
-            {(Object.keys(SOURCE_TYPE_LABELS) as SourceType[]).map((type) => (
-              <button
-                key={type}
-                type="button"
-                onClick={() => setTypeFilter(type)}
-                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors hover:opacity-80 ${
-                  SOURCE_TYPE_PILL_CLASSES[type]
-                } ${typeFilter === type ? 'ring-2 ring-inset ring-gray-900' : ''}`}
-              >
-                {SOURCE_TYPE_LABELS[type]}
-              </button>
-            ))}
-            <div className="ml-auto">
-              <select
-                value={sort}
-                onChange={(e) => setSort(e.target.value as SortOption)}
-                className="rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs font-medium text-gray-600 outline-none transition-colors focus:border-brand-600 focus:shadow-ring-brand"
-              >
-                <option value="newest">Date added (newest)</option>
-                <option value="oldest">Date added (oldest)</option>
-                <option value="type-az">Source type (A–Z)</option>
-              </select>
-            </div>
+              <option value="all">All types</option>
+              {(Object.keys(SOURCE_TYPE_LABELS) as SourceType[]).map((type) => (
+                <option key={type} value={type}>
+                  {SOURCE_TYPE_LABELS[type]}
+                </option>
+              ))}
+            </select>
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as SortOption)}
+              className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-brand-600 focus:shadow-ring-brand"
+            >
+              <option value="newest">Date added (newest)</option>
+              <option value="oldest">Date added (oldest)</option>
+              <option value="type-az">Source type (A–Z)</option>
+            </select>
           </div>
         )}
 

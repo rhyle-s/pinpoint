@@ -478,6 +478,22 @@ reachable by reverting these commits.
   collection today (a collection is just a free-text `label` that exists because ≥1 citation has it),
   so a literal "create an empty collection" control would have been new functionality this task didn't
   ask for, not a restyle.
+- **Follow-up round on the same rollout, two Generator layout fixes and two Library simplifications.**
+  Generator: the "Fill in details automatically" card was pulled out of the left column to sit full
+  width above the two-column grid (previously constrained to the left column's own width, which was
+  narrower than the page). That same move fixed the second ask for free — "the right column should
+  start in line with Source type" — since with the autofill card and its notice banner now living
+  *above* the grid rather than as the grid's first left-column child, both columns' first real child
+  (`SourceTypeSelector` on the left, the `AGLC4 check passed` banner on the right) start at the same
+  row. Library: the user felt the page had too many colours at once — the 11-colour filter-chip row,
+  the per-row `border-l-4` colour accent, and the type pill were all echoing the same per-type colour
+  simultaneously. Removed the two redundant surfaces rather than picking one arbitrarily: the chip row
+  is gone (this also directly answered the second ask, "make the types bar more concise" — it's a
+  plain `<select>` again, alongside the sort `<select>`, matching how the filter row looked before this
+  whole redesign round), and `SOURCE_TYPE_ACCENT_CLASSES` (added earlier in this same rollout) was
+  deleted outright — dead code once nothing referenced it, not left in place unused. The type pill
+  itself is untouched and still coloured — it's the one place per-type colour is actually doing useful
+  work (identifying a row's type at a glance), so it's the one that stayed.
 
 ## Deployment
 
