@@ -29,7 +29,7 @@ export default function GuideNav() {
                     <a
                       href={`#${entry.sourceType}`}
                       onClick={() => setOpen(false)}
-                      className="block rounded-md px-2 py-1.5 text-sm text-gray-600 hover:bg-primary-tint hover:text-primary"
+                      className="block border-l-2 border-transparent py-1.5 pl-3 pr-2 text-sm text-gray-600 transition-colors hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900"
                     >
                       {entry.title}
                     </a>

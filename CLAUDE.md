@@ -785,6 +785,62 @@ polish, not missing content):
   static reference text, never runs the actual formatters for this part (the worked examples below
   each format box do call `generateCitationSync`, untouched).
 
+## Guide page redesign — "reference docs" layout (Concept B)
+
+Explored three visual directions for the guide page as HTML mockups (an Artifact, no code touched —
+an annotated-diagram teaching tool, a dense three-pane reference-docs layout, and an editorial
+textbook style) and the user picked the reference-docs concept. Built into the real page:
+
+- **`app/guide/page.tsx`**: the 2-column `nav + content` grid became 3-column
+  (`lg:grid-cols-[220px_1fr_240px]`, page `max-w-6xl` → `max-w-7xl` for the extra column's room) — a
+  new sticky right rail ("Quick actions": a one-line blurb plus `Open the Generator →`/`Check a
+  citation →` links). The rail is `hidden` below `lg` rather than collapsing into the page flow, same
+  as the nav's own desktop-only sticky behaviour. **The centred kicker+hero header above the grid was
+  deliberately left untouched** — it already matches every other page (`/generate`, `/checker`,
+  `/auth/*`) from an earlier round, and Concept B's own "docs" identity lives in the three-column body
+  below it, not in a second competing header style.
+- **`components/GuideSection.tsx`** rewritten: the format template is now a monospace code block
+  (`bg-gray-50` box) with real syntax colouring — `CodeLine`'s `classifyToken()` treats a
+  bracket-wrapped `[...]`, angle-bracket-wrapped `<...>`, or quote-wrapped `'...'` segment as a
+  placeholder (bold, `text-primary`) and everything else as a muted literal, with `,`/`.` fainter
+  still. This is a fully mechanical rule (no per-entry hand-curation needed) that happens to line up
+  with AGLC4's own convention — the bracketed/quoted segments are exactly the ones that are also
+  italicised/quoted in the real citation, eg `[Italic Case Name]`, `'Article Title'` — so it correctly
+  highlights the genuinely variable elements without any extra data-model work. A source type with
+  `formatTemplate` as an array (`internationalMaterial`, `otherSources`) renders one small labelled
+  code block per item, same as the previous round.
+  - A new `CATEGORY_CHIP_LABEL` map adds a small "Primary source"/"Secondary source"/"International"
+    chip next to each `<h2>` — derived directly from the entry's own `category` field, not invented
+    text.
+  - The citation-output sizing was brought in line with the rest of the app while this file was
+    already being rewritten: `font-serif text-base leading-relaxed` (16px/1.625, the value this file
+    had used since before `CitationOutput.tsx`'s own Panel component settled on 15px/1.8) is now
+    `font-citation text-[15px] leading-[1.8]`, matching `CitationOutput.tsx` and `Checker.tsx` exactly
+    — a small, in-scope polish since the render logic was already being touched, not a separate pass.
+- **`components/GuideExampleTabs.tsx`** (new, `'use client'`) — a source type with a manageable
+  number of worked examples (`TABS_MAX_EXAMPLES = 8` in `GuideSection.tsx`) now switches between them
+  via tabs instead of stacking every one as its own card, which is where most of the concept's density
+  win actually shows up: Cases (4 examples) or Journal Articles (3) read as one compact block instead
+  of a small pile of near-identical cards. **`internationalMaterial` (22 examples) and `otherSources`
+  (12) deliberately stay on the original stacked-card layout** — a real, counted threshold decision,
+  not an oversight: 22 tabs (several with long descriptive labels like "UN Materials — newer
+  numbering, separate adoption date, with pinpoint") would wrap across many cramped lines and be
+  harder to scan than the existing stacked cards, so the tab treatment is scoped to where it
+  genuinely helps rather than applied uniformly for consistency's own sake. `GuideSection.tsx` computes
+  every example's rendered HTML server-side either way (`generateCitationSync` + `formatItalics`, as
+  before) and only the *display* of that already-computed list differs between the two paths — the tab
+  component receives plain `{ label, html }` pairs, no client-side citation generation.
+- **`components/GuideNav.tsx`**: the `<a>` treatment for each entry changed from a plain hover-tint
+  pill to a docs-style left-border accent (`border-l-2 border-transparent`, filled on hover) — visual
+  only, same anchor links, same mobile "Jump to section" collapse behaviour, no scroll-spy/active-
+  section tracking added (the mockup's "current" highlighting was a static mockup choice, not a real
+  feature — deliberately not built here since it would need real IntersectionObserver-based state and
+  wasn't part of what was actually asked for).
+- Verified live at desktop (1400px, confirming all three columns + tab switching + the
+  internationalMaterial stacked path) and mobile (375px, confirming the rail hides entirely, the nav
+  collapses to its existing "Jump to section" toggle, and a multi-block template like
+  `internationalMaterial`'s wraps cleanly with no horizontal overflow).
+
 ## Deployment
 
 The GitHub repo is `github.com/rhyle-s/pinpoint` (`origin`), all work on `main`. Not deployed anywhere yet — deploying will need `vercel login` run interactively (can't be done from a non-interactive agent session).
