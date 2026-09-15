@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { Document, HeadingLevel, Packer, Paragraph, TextRun } from 'docx'
+import { Document, Packer, Paragraph, TextRun } from 'docx'
 import { createClient } from '@/lib/supabase/server'
 import { CitationFields, SourceType } from '@/lib/citation-engine/types'
 import {
@@ -77,10 +77,10 @@ export async function GET(request: NextRequest) {
     return [
       new Paragraph({
         // Only the section name is italicised, per AGLC4's own r 1.13 heading style — the letter
-        // itself stays roman.
+        // itself stays roman. Neither run is bold — a plain-weight heading, not a bold one.
         children: [
-          new TextRun({ text: `${section} `, bold: true, size: CITATION_FONT_SIZE + 2 }),
-          new TextRun({ text: BIBLIOGRAPHY_SECTION_LABELS[section], italics: true, bold: true, size: CITATION_FONT_SIZE + 2 }),
+          new TextRun({ text: `${section} `, size: CITATION_FONT_SIZE + 2 }),
+          new TextRun({ text: BIBLIOGRAPHY_SECTION_LABELS[section], italics: true, size: CITATION_FONT_SIZE + 2 }),
         ],
         spacing: { before: 300, after: 200 },
       }),
@@ -108,7 +108,15 @@ export async function GET(request: NextRequest) {
     sections: [
       {
         children: [
-          new Paragraph({ text: 'Bibliography', heading: HeadingLevel.HEADING_1, spacing: { after: 300 } }),
+          // Not using the `heading: HeadingLevel.HEADING_1` shorthand here — it pulls in docx's
+          // built-in Heading 1 style, which renders in the theme's accent colour (blue, by
+          // default) in Word. Explicit runs with color: '000000' keep the title bold and large
+          // without inheriting that colour, and use the same Times New Roman as the rest of the
+          // document instead of the built-in style's own (different) heading font.
+          new Paragraph({
+            children: [new TextRun({ text: 'Bibliography', bold: true, size: 32, font: CITATION_FONT, color: '000000' })],
+            spacing: { after: 300 },
+          }),
           ...bodyParagraphs,
         ],
       },
